@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Rank — Event Game</title>
+<style>
+  /* Matches scoreboard.html broadcast design tokens */
+  :root {
+    color-scheme: dark;
+    --bg: #0a0e15; --panel: rgba(18,24,38,0.85); --panel-solid: #121826;
+    --hairline: rgba(255,255,255,0.08); --hairline-2: rgba(255,255,255,0.14);
+    --ink: #f2f5fa; --ink-2: #9aa6ba; --ink-3: #5d6a80;
+    --accent: #3987e5; --accent-soft: rgba(57,135,229,0.16); --accent-glow: rgba(57,135,229,0.45);
+    --gold: #f5c542; --gold-soft: rgba(245,197,66,0.14); --good: #2ec27e;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font); color: var(--ink); min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(57,135,229,0.16), transparent 60%),
+      radial-gradient(700px 400px at 5% 110%, rgba(57,135,229,0.08), transparent 55%),
+      var(--bg);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 22px 16px 40px;
+  }
+  .wrap { width: 100%; max-width: 460px; }
+  header { text-align: center; margin-bottom: 18px; }
+  header h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+  header h1 .bar { color: var(--accent); }
+  header p { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 18px; backdrop-filter: blur(6px);
+  }
+  .searchrow { display: flex; gap: 8px; }
+  input[type=text] {
+    flex: 1; min-width: 0; background: rgba(255,255,255,0.05); color: var(--ink);
+    border: 1px solid var(--hairline-2); border-radius: 12px; padding: 13px 14px;
+    font: inherit; font-size: 16px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  input::placeholder { text-transform: none; font-weight: 400; color: var(--ink-3); }
+  button {
+    font: inherit; font-weight: 800; letter-spacing: 0.06em; border: none; cursor: pointer;
+    border-radius: 12px; padding: 13px 18px; color: #fff;
+    background: linear-gradient(135deg, #3987e5, #2b6ec2);
+  }
+  button:active { transform: translateY(1px); }
+  .hint { color: var(--ink-3); font-size: 12px; margin-top: 10px; line-height: 1.5; }
+
+  .msg { margin-top: 14px; text-align: center; color: var(--ink-2); font-size: 14px; line-height: 1.6; display: none; }
+  .msg.show { display: block; }
+  .msg.err { color: #ff8d8d; }
+
+  /* ---------------- rank card ---------------- */
+  .card { display: none; margin-top: 16px; overflow: hidden; padding: 0; }
+  .card.show { display: block; animation: pop-in .45s cubic-bezier(.2,.9,.3,1.1); }
+  @keyframes pop-in { from { opacity: 0; transform: scale(.94) translateY(12px);} to { opacity: 1; transform: none;} }
+  .card-head {
+    background: linear-gradient(100deg, var(--panel-solid) 0%, #16203a 60%, #12233f 100%);
+    border-bottom: 1px solid var(--hairline-2); padding: 12px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-head .co { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
+  .card-head .co b { color: var(--accent); }
+  .live { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.18em; color: #ff5d5d; }
+  .live i { width: 7px; height: 7px; border-radius: 50%; background: #ff5d5d; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1;} 50% { opacity: .4;} }
+
+  .card-body { padding: 22px 18px 18px; text-align: center; }
+  .tag { font-size: 30px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; word-break: break-all; }
+  .rankline { margin-top: 14px; }
+  .rankline .lbl { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; color: var(--ink-3); }
+  .bigrank {
+    font-size: 84px; font-weight: 900; line-height: 1.05; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffffff 20%, #9cc4f5 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 44px var(--accent-glow);
+  }
+  .bigrank.top3 { background: linear-gradient(180deg, #fff3cf 15%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; }
+  .ofn { color: var(--ink-2); font-size: 14px; font-weight: 700; }
+  .scoreline { margin-top: 12px; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .scoreline span { font-size: 12px; color: var(--ink-3); font-weight: 700; letter-spacing: 0.14em; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--hairline); border-top: 1px solid var(--hairline); margin-top: 18px; }
+  .cell { background: var(--panel-solid); padding: 12px 6px; text-align: center; }
+  .cell .v { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .cell .k { font-size: 9px; letter-spacing: 0.14em; color: var(--ink-3); font-weight: 700; margin-top: 2px; }
+
+  .callout {
+    margin: 14px 16px 0; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.55;
+    background: var(--accent-soft); border: 1px solid rgba(57,135,229,0.35); color: #cfe3ff;
+  }
+  .callout.gold { background: var(--gold-soft); border-color: rgba(245,197,66,0.4); color: #ffe9a8; }
+
+  .card-actions { display: flex; gap: 10px; padding: 16px; }
+  .card-actions button { flex: 1; }
+  button.ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--hairline-2); color: var(--ink-2); }
+  .hashtag-foot { text-align: center; padding: 0 16px 16px; font-weight: 900; font-size: 15px;
+    background: linear-gradient(90deg, #6db1ff, #b9d9ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  .refreshed { text-align: center; color: var(--ink-3); font-size: 11px; margin-top: 12px; }
+  canvas { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="hCompany">GAME ZONE <span class="bar">// MY RANK</span></h1>
+    <p>พิมพ์ชื่อผู้เล่นของคุณเพื่อดูอันดับสด · Type your player name to see your live rank</p>
+  </header>
+
+  <div class="panel">
+    <div class="searchrow">
+      <input type="text" id="tagInput" placeholder="เช่น / e.g. BEAMZILLA" autocomplete="off" autocapitalize="characters" enterkeyhint="search">
+      <button id="goBtn">GO</button>
+    </div>
+    <div class="hint">ชื่อผู้เล่นคือชื่อที่คุณตั้งตอนลงทะเบียน (ชื่อบนจอสกอร์บอร์ด)<br>Your player name is the one you chose at registration — the name on the big screen.</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <div class="panel card" id="card">
+    <div class="card-head">
+      <div class="co" id="cardCo">GAME ZONE</div>
+      <div class="live"><i></i>LIVE</div>
+    </div>
+    <div class="card-body">
+      <div class="tag" id="cTag">—</div>
+      <div class="rankline">
+        <div class="lbl">CURRENT RANK</div>
+        <div><span class="bigrank" id="cRank">–</span></div>
+        <div class="ofn" id="cOf">of – players</div>
+      </div>
+      <div class="scoreline"><span>TOTAL&nbsp;&nbsp;</span><span id="cScore" style="font-size:inherit;color:var(--ink);letter-spacing:0">0</span></div>
+      <div class="split">
+        <div class="cell"><div class="v" id="cPunch">–</div><div class="k">PUNCH BEST</div></div>
+        <div class="cell"><div class="v" id="cScream">–</div><div class="k">SCREAM BONUS</div></div>
+      </div>
+    </div>
+    <div class="callout" id="cCallout"></div>
+    <div class="card-actions">
+      <button id="shareBtn">📣 SHARE MY RANK</button>
+      <button class="ghost" id="refreshBtn">↻</button>
+    </div>
+    <div class="hashtag-foot" id="cHashtag"></div>
+  </div>
+
+  <div class="refreshed" id="refreshed"></div>
+</div>
+
+<canvas id="shareCanvas" width="1080" height="1350"></canvas>
+
+<script>
+/* ==================================================================
+   CONFIG — same sheet as scoreboard.html. Reads TWO tabs:
+     Players  (all scores -> computes this player's exact rank)
+     Display  (company name / hashtag / social handles)
+   Override with ?sheet=<SHEET_ID> in the URL, and deep-link a player
+   with ?tag=BEAMZILLA (the registration confirmation link does this).
+   ================================================================== */
+const SHEET_ID = "1MJp-Ns0SVVeZYVGFjdhScvjldC5tFVYJLAfM3W4185k";
+const TOP_N = 40;          /* size of the TV leaderboard (rotating top 40) */
+const AUTO_REFRESH_MS = 15000;
+
+const QS = new URLSearchParams(location.search);
+const SID = QS.get("sheet") || SHEET_ID;
+const urlFor = tab =>
+  "https://docs.google.com/spreadsheets/d/" + SID +
+  "/gviz/tq?tqx=out:csv&headers=0&sheet=" + tab + "&_=" + Date.now();
+
+/* Players tab column indexes (0-based) — matches the live sheet layout */
+const COL = { ID: 0, DAY: 2, TAG: 3, PLAYS_EARNED: 10, S1: 11, S2: 12, S3: 13,
+              SCREAM_DB: 14, SCREAM_SCORE: 15, TOTAL: 16, PLAYS_USED: 17 };
+
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+      else cur += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === ',') { row.push(cur); cur = ""; }
+    else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ""; }
+    else if (ch !== '\r') cur += ch;
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+function num(v) { return Number(String(v == null ? "" : v).replace(/[,\s]/g, "")) || 0; }
+const $ = id => document.getElementById(id);
+
+/* ---------------- data ---------------- */
+let brand = null;   /* {company, hashtag, ig, fb} */
+
+async function fetchBrand() {
+  if (brand) return brand;
+  const res = await fetch(urlFor("Display"), { cache: "no-store" });
+  const map = {};
+  for (const r of parseCSV(await res.text())) {
+    const k = (r[0] || "").trim().toLowerCase();
+    if (k) map[k] = r.slice(1);
+  }
+  brand = {
+    company: (map.company || [""])[0] || "Game Zone",
+    hashtag: (map.hashtag || [""])[0] || "",
+    ig: (map.ig || [""])[0] || "", fb: (map.fb || [""])[0] || "",
+  };
+  return brand;
+}
+
+async function fetchPlayers() {
+  const res = await fetch(urlFor("Players"), { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const rows = parseCSV(await res.text());
+  const players = [];
+  rows.forEach((r, i) => {
+    if (i === 0) return;                       /* header row */
+    const tag = (r[COL.TAG] || "").trim();
+    if (!tag) return;
+    players.push({
+      row: i,
+      id: (r[COL.ID] || "").trim(),
+      tag,
+      punch: Math.max(num(r[COL.S1]), num(r[COL.S2]), num(r[COL.S3])),
+      scream: num(r[COL.SCREAM_SCORE]),
+      total: num(r[COL.TOTAL]),
+      playsEarned: num(r[COL.PLAYS_EARNED]),
+      playsUsed: num(r[COL.PLAYS_USED]),
+    });
+  });
+  /* rank: score desc; ties -> earlier registration wins (same as the sheet's rank key) */
+  players.sort((a, b) => b.total - a.total || a.row - b.row);
+  players.forEach((p, i) => { p.rank = i + 1; });
+  return players;
+}
+
+/* ---------------- lookup + render ---------------- */
+let current = null;   /* {player, count, cutoff} for share/refresh */
+let timer = null;
+
+function showMsg(text, isErr) {
+  const m = $("msg");
+  m.textContent = text;
+  m.className = "msg show" + (isErr ? " err" : "");
+}
+function hideMsg() { $("msg").className = "msg"; }
+
+async function lookup(rawTag, silent) {
+  const q = (rawTag || "").trim().toUpperCase();
+  if (!q) return;
+  if (!silent) { showMsg("กำลังค้นหา… / Looking you up…"); $("card").classList.remove("show"); }
+  try {
+    const [players, b] = await Promise.all([fetchPlayers(), fetchBrand()]);
+    const p = players.find(x => x.tag.toUpperCase() === q)
+           || players.find(x => x.id.toUpperCase() === q);   /* P-047 also works */
+    if (!p) {
+      showMsg('ไม่พบชื่อ "' + q + '" — เช็กตัวสะกด หรือถามสตาฟหน้าบูธ\nName "' + q + '" not found — check the spelling, or ask our booth staff.', true);
+      return;
+    }
+    current = { p, count: players.length,
+                cutoff: players[TOP_N - 1] ? players[TOP_N - 1].total : 0,
+                leader: players[0] ? players[0].total : 0 };
+    hideMsg();
+    renderCard(b);
+    history.replaceState(null, "", "?tag=" + encodeURIComponent(p.tag) + (QS.get("sheet") ? "&sheet=" + SID : ""));
+    clearInterval(timer);
+    timer = setInterval(() => lookup(p.tag, true), AUTO_REFRESH_MS);
+  } catch (e) {
+    showMsg("โหลดข้อมูลไม่ได้ กรุณาลองใหม่ / Couldn't load scores (" + e.message + "). Please try again.", true);
+  }
+}
+
+function renderCard(b) {
+  const { p, count, cutoff } = current;
+  $("cardCo").innerHTML = esc(b.company.toUpperCase()) + " <b>// GAME ZONE</b>";
+  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// MY RANK</span>';
+  $("cTag").textContent = p.tag;
+  const rankEl = $("cRank");
+  rankEl.textContent = p.total > 0 ? "#" + p.rank : "—";
+  rankEl.className = "bigrank" + (p.total > 0 && p.rank <= 3 ? " top3" : "");
+  $("cOf").textContent = "of " + count.toLocaleString() + " players";
+  $("cScore").textContent = p.total.toLocaleString();
+  $("cPunch").textContent = p.punch ? p.punch.toLocaleString() : "–";
+  $("cScream").textContent = p.scream ? "+" + p.scream.toLocaleString() : "–";
+
+  const co = $("cCallout");
+  const playsLeft = Math.max(0, p.playsEarned - p.playsUsed);
+  if (p.total === 0) {
+    co.className = "callout";
+    co.textContent = "ยังไม่มีคะแนน — ไปที่บูธแล้วเริ่มต่อยเลย! 🥊 No score yet — head to the booth and throw your first punch!";
+  } else if (p.rank === 1) {
+    co.className = "callout gold";
+    co.textContent = "👑 คุณคือแชมป์! ป้องกันบัลลังก์ไว้ให้ได้ · You're the champion — defend that throne!";
+  } else if (p.rank <= TOP_N) {
+    co.className = "callout gold";
+    co.textContent = "🔥 คุณอยู่ใน TOP " + TOP_N + " บนจอใหญ่! ห่างแชมป์ " +
+      (current.leader - p.total).toLocaleString() + " คะแนน · You're in the TOP " + TOP_N +
+      " on the big screen — " + (current.leader - p.total).toLocaleString() + " points behind the champ.";
+  } else {
+    const gap = Math.max(0, cutoff - p.total + 1);
+    co.className = "callout";
+    co.textContent = "อีก " + gap.toLocaleString() + " คะแนนจะติด TOP " + TOP_N + "!" +
+      (playsLeft > 0 ? " คุณเหลือสิทธิ์ต่อยอีก " + playsLeft + " ครั้ง" : "") +
+      (!p.scream ? " หรือลองเกมตะโกนรับโบนัส 📣" : "") +
+      " · " + gap.toLocaleString() + " points to crack the TOP " + TOP_N +
+      (playsLeft > 0 ? " — you still have " + playsLeft + " punch play(s) left!" : "") +
+      (!p.scream ? " Or try the scream game for a bonus!" : "");
+  }
+
+  $("cHashtag").textContent = b.hashtag;
+  $("card").classList.add("show");
+  $("refreshed").textContent = "อัปเดตล่าสุด / updated " + new Date().toLocaleTimeString();
+}
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+/* ---------------- share card image (canvas -> native share sheet) ----------------
+   1080x1350 (4:5) — posts clean to IG feed, FB, TikTok photo, and stories.
+   Fight-poster layout: full-bleed bg, tag on an angled banner, giant rank,
+   full-width hashtag band at the bottom. */
+function drawShareCard() {
+  const { p, count } = current;
+  const b = brand;
+  const cv = $("shareCanvas"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  const isTop3 = p.total > 0 && p.rank <= 3;
+  const rankTxt = p.total > 0 ? "#" + p.rank : "NEW";
+  const F = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
+  const GOLD = "#f5c542", BLUE = "#3987e5", INK = "#0a0e15";
+  const hero = isTop3 ? GOLD : BLUE;
+  const heroDark = isTop3 ? "#8a6a14" : "#1d4f92";
+
+  /* --- background: deep navy, center glow, bold diagonal beams --- */
+  let g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#0e1526"); g.addColorStop(0.6, INK); g.addColorStop(1, INK);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  g = ctx.createRadialGradient(W / 2, 700, 80, W / 2, 700, 660);
+  g.addColorStop(0, isTop3 ? "rgba(245,197,66,0.22)" : "rgba(57,135,229,0.28)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(W / 2, H / 2); ctx.rotate(-0.24);
+  for (let i = -9; i <= 9; i++) {
+    ctx.fillStyle = "rgba(255,255,255," + (i % 2 ? 0.012 : 0.03) + ")";
+    ctx.fillRect(-W * 1.2, i * 92, W * 2.4, 46);
+  }
+  ctx.restore();
+  /* faint giant outline echo of the rank behind everything */
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 3;
+  ctx.font = "900 560px " + F; ctx.textAlign = "center";
+  ctx.strokeText(rankTxt, W / 2, 940);
+  ctx.restore();
+
+  ctx.textAlign = "center";
+
+  /* --- header row: company left, LIVE pill right --- */
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#f2f5fa"; ctx.font = "800 38px " + F;
+  ctx.fillText(b.company.toUpperCase(), 70, 116);
+  ctx.fillStyle = hero; ctx.font = "800 24px " + F;
+  ctx.fillText(spaced("LIVE SCORE CARD"), 70, 158);
+  /* LIVE pill */
+  ctx.fillStyle = "rgba(255,93,93,0.14)";
+  roundRect(ctx, W - 250, 78, 180, 62, 31); ctx.fill();
+  ctx.strokeStyle = "rgba(255,93,93,0.5)"; ctx.lineWidth = 2;
+  roundRect(ctx, W - 250, 78, 180, 62, 31); ctx.stroke();
+  ctx.fillStyle = "#ff5d5d";
+  ctx.beginPath(); ctx.arc(W - 218, 109, 9, 0, 7); ctx.fill();
+  ctx.font = "800 28px " + F; ctx.fillText("LIVE", W - 196, 119);
+  ctx.textAlign = "center";
+
+  /* --- player tag: dark text on a big angled hero banner --- */
+  const tagSize = fitFont(ctx, p.tag, 900, F, 100, W - 340);
+  const bannerH = tagSize + 74, bannerY = 250, skew = 26;
+  const bw = ctx.measureText(p.tag.toUpperCase()).width + 150;
+  const bx = W / 2 - bw / 2;
+  /* drop shadow band */
+  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  banner(ctx, bx + 14, bannerY + 16, bw, bannerH, skew); ctx.fill();
+  g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  g.addColorStop(0, hero); g.addColorStop(1, isTop3 ? "#ffdf7e" : "#63a5f0");
+  ctx.fillStyle = g;
+  banner(ctx, bx, bannerY, bw, bannerH, skew); ctx.fill();
+  ctx.fillStyle = INK; ctx.font = "900 " + tagSize + "px " + F;
+  ctx.fillText(p.tag.toUpperCase(), W / 2, bannerY + bannerH / 2 + tagSize * 0.36);
+
+  /* --- rank hero --- */
+  ctx.fillStyle = "#9aa6ba"; ctx.font = "800 30px " + F;
+  ctx.fillText(spaced("CURRENT RANK"), W / 2, 505);
+  const rankFont = rankTxt.length > 4 ? 240 : rankTxt.length > 3 ? 290 : 340;
+  ctx.save();
+  ctx.shadowColor = isTop3 ? "rgba(245,197,66,0.55)" : "rgba(57,135,229,0.55)";
+  ctx.shadowBlur = 80;
+  g = ctx.createLinearGradient(0, 540, 0, 870);
+  if (isTop3) { g.addColorStop(0, "#fff3cf"); g.addColorStop(1, GOLD); }
+  else { g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#9cc4f5"); }
+  ctx.fillStyle = g;
+  ctx.font = "900 " + rankFont + "px " + F;
+  ctx.fillText(rankTxt, W / 2, 850);
+  ctx.restore();
+  if (isTop3) {
+    ctx.font = "96px " + F;
+    ctx.fillText(["🥇", "🥈", "🥉"][p.rank - 1], W / 2 + (rankTxt.length > 2 ? 270 : 215), 620);
+  }
+  /* "of N players" pill */
+  ctx.font = "700 34px " + F;
+  const ofTxt = "of " + count.toLocaleString() + " players";
+  const ofW = ctx.measureText(ofTxt).width + 76;
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 31); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = 2;
+  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 31); ctx.stroke();
+  ctx.fillStyle = "#c6d2e4"; ctx.fillText(ofTxt, W / 2, 935);
+
+  /* --- score strip: TOTAL big + game chips --- */
+  ctx.fillStyle = "#5d6a80"; ctx.font = "800 26px " + F;
+  ctx.fillText(spaced("TOTAL SCORE"), W / 2, 1032);
+  ctx.fillStyle = "#f2f5fa"; ctx.font = "900 96px " + F;
+  ctx.fillText(p.total.toLocaleString(), W / 2, 1128);
+  const parts = [];
+  if (p.punch) parts.push("🥊 PUNCH " + p.punch.toLocaleString());
+  if (p.scream) parts.push("📣 SCREAM +" + p.scream.toLocaleString());
+  if (parts.length) {
+    ctx.font = "700 30px " + F;
+    let x = W / 2 - (parts.length - 1) * 190;
+    for (const t of parts) {
+      const cw = ctx.measureText(t).width + 56;
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      roundRect(ctx, x - cw / 2, 1152, cw, 56, 28); ctx.fill();
+      ctx.fillStyle = "#9aa6ba"; ctx.fillText(t, x, 1191);
+      x += 380;
+    }
+  }
+
+  /* --- full-bleed angled hashtag band --- */
+  ctx.beginPath();
+  ctx.moveTo(0, 1268); ctx.lineTo(W, 1236); ctx.lineTo(W, H); ctx.lineTo(0, H);
+  ctx.closePath();
+  g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, heroDark); g.addColorStop(1, hero);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "900 44px " + F;
+  ctx.fillText((b.hashtag || "#GAMEZONE") + "  ·  COME BEAT ME 🔥", W / 2, 1318);
+}
+function banner(ctx, x, y, w, h, skew) {
+  ctx.beginPath();
+  ctx.moveTo(x + skew, y); ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w - skew, y + h); ctx.lineTo(x, y + h);
+  ctx.closePath();
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function fitFont(ctx, text, weight, family, start, maxW) {
+  let size = start;
+  do { ctx.font = weight + " " + size + "px " + family; size -= 4; }
+  while (ctx.measureText(text.toUpperCase()).width > maxW && size > 30);
+  return size + 4;
+}
+function spaced(s) { return s.split("").join(" "); }
+
+async function share() {
+  if (!current) return;
+  drawShareCard();
+  const blob = await new Promise(r => $("shareCanvas").toBlob(r, "image/png"));
+  const file = new File([blob], "my-rank.png", { type: "image/png" });
+  const caption = "อันดับ " + (current.p.total > 0 ? "#" + current.p.rank : "NEW") +
+    " จาก " + current.count + " คน! " + (brand.hashtag || "") + " — come beat me 🔥";
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text: caption }); return; }
+    catch (e) { if (e.name === "AbortError") return; }
+  }
+  /* fallback: download the image so they can post it manually */
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "my-rank.png"; a.click();
+  URL.revokeObjectURL(a.href);
+  try { await navigator.clipboard.writeText(caption); } catch (e) {}
+  showMsg("บันทึกการ์ดรูปแล้ว (แคปชันคัดลอกไว้ให้แล้ว) — โพสต์ลง IG / FB / TikTok ได้เลย!\nCard image saved (caption copied) — post it to IG / FB / TikTok!");
+}
+
+/* ---------------- wire up ---------------- */
+$("goBtn").addEventListener("click", () => lookup($("tagInput").value));
+$("tagInput").addEventListener("keydown", e => { if (e.key === "Enter") lookup($("tagInput").value); });
+$("shareBtn").addEventListener("click", share);
+$("refreshBtn").addEventListener("click", () => current && lookup(current.p.tag));
+
+fetchBrand().then(b => {
+  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// MY RANK</span>';
+}).catch(() => {});
+
+const initTag = QS.get("tag");
+if (initTag) { $("tagInput").value = initTag; lookup(initTag); }
+</script>
+</body>
+</html>
