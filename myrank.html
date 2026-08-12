@@ -110,7 +110,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="hCompany">GAME ZONE <span class="bar">// MY RANK</span></h1>
+    <h1 id="hCompany"><span class="bar">MY RANK</span></h1>
     <p>พิมพ์ชื่อผู้เล่นของคุณเพื่อดูอันดับสด · Type your player name to see your live rank</p>
   </header>
 
@@ -126,7 +126,7 @@
 
   <div class="panel card" id="card">
     <div class="card-head">
-      <div class="co" id="cardCo">GAME ZONE</div>
+      <div class="co" id="cardCo">&nbsp;</div>
       <div class="live"><i></i>LIVE</div>
     </div>
     <div class="card-body">
@@ -207,7 +207,7 @@ async function fetchBrand() {
     if (k) map[k] = r.slice(1);
   }
   brand = {
-    company: (map.company || [""])[0] || "Game Zone",
+    company: (map.company || [""])[0] || "Event Game",
     hashtag: (map.hashtag || [""])[0] || "",
     ig: (map.ig || [""])[0] || "", fb: (map.fb || [""])[0] || "",
   };
@@ -278,7 +278,7 @@ async function lookup(rawTag, silent) {
 
 function renderCard(b) {
   const { p, count, cutoff } = current;
-  $("cardCo").innerHTML = esc(b.company.toUpperCase()) + " <b>// GAME ZONE</b>";
+  $("cardCo").innerHTML = esc(b.company.toUpperCase()) + " <b>// LIVE RANK</b>";
   $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// MY RANK</span>';
   $("cTag").textContent = p.tag;
   const rankEl = $("cRank");
@@ -447,7 +447,7 @@ function drawShareCard() {
   g.addColorStop(0, heroDark); g.addColorStop(1, hero);
   ctx.fillStyle = g; ctx.fill();
   ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "900 44px " + F;
-  ctx.fillText((b.hashtag || "#GAMEZONE") + "  ·  COME BEAT ME 🔥", W / 2, 1318);
+  ctx.fillText((b.hashtag ? b.hashtag + "  ·  " : "") + "COME BEAT ME 🔥", W / 2, 1318);
 }
 function banner(ctx, x, y, w, h, skew) {
   ctx.beginPath();

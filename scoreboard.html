@@ -6,23 +6,26 @@
 <title>Event Scoreboard</title>
 <style>
   /* ============================================================
-     BROADCAST SCOREBOARD — e-sports style, dark TV display
-     v3: TOP 40 leaderboard, auto-rotating pages (1–20 / 21–40)
+     BROADCAST SCOREBOARD — v4 redesign
+     Violet/teal arena look, glass panels, score-progress bars,
+     TOP 40 leaderboard with auto-rotating pages (1–20 / 21–40)
      Design tokens
      ============================================================ */
   :root {
     color-scheme: dark;
-    --bg:            #0a0e15;
-    --panel:         rgba(18, 24, 38, 0.85);
-    --panel-solid:   #121826;
-    --hairline:      rgba(255, 255, 255, 0.08);
+    --bg:            #06080f;
+    --panel:         rgba(15, 19, 32, 0.78);
+    --panel-solid:   #0f1320;
+    --hairline:      rgba(255, 255, 255, 0.07);
     --hairline-2:    rgba(255, 255, 255, 0.14);
-    --ink:           #f2f5fa;
-    --ink-2:         #9aa6ba;
-    --ink-3:         #5d6a80;
-    --accent:        #3987e5;
-    --accent-soft:   rgba(57, 135, 229, 0.16);
-    --accent-glow:   rgba(57, 135, 229, 0.45);
+    --ink:           #eef1f8;
+    --ink-2:         #98a2b8;
+    --ink-3:         #5a6478;
+    --accent:        #8b5cf6;              /* violet */
+    --accent-2:      #2dd4bf;              /* teal   */
+    --accent-soft:   rgba(139, 92, 246, 0.16);
+    --accent-glow:   rgba(139, 92, 246, 0.45);
+    --teal-soft:     rgba(45, 212, 191, 0.14);
     --gold:          #f5c542;
     --gold-soft:     rgba(245, 197, 66, 0.14);
     --silver:        #c0c8d4;
@@ -35,29 +38,42 @@
   body {
     font-family: var(--font);
     background:
-      radial-gradient(1200px 600px at 75% -10%, rgba(57,135,229,0.14), transparent 60%),
-      radial-gradient(900px 500px at 10% 110%, rgba(57,135,229,0.08), transparent 55%),
+      radial-gradient(1100px 560px at 85% -12%, rgba(139,92,246,0.16), transparent 60%),
+      radial-gradient(900px 520px at 0% 115%, rgba(45,212,191,0.10), transparent 55%),
       var(--bg);
     color: var(--ink);
     overflow: hidden;
   }
-  /* angled sheen sweeping the header, broadcast-style */
+  /* faint arena grid behind everything */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%);
+  }
   @keyframes sheen { 0% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(340%) skewX(-20deg); } }
   @keyframes pulse-dot { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .45; transform: scale(.8);} }
   @keyframes row-in { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: none;} }
   @keyframes flash-up { 0% { background: rgba(46,194,126,0.28);} 100% { background: transparent;} }
   @keyframes flash-gold { 0% { box-shadow: inset 0 0 0 2px var(--gold), 0 0 34px rgba(245,197,66,.45);} 100% { box-shadow: inset 0 0 0 1px rgba(245,197,66,.5), 0 0 18px rgba(245,197,66,.12);} }
 
-  .app { display: flex; flex-direction: column; height: 100vh; padding: clamp(10px, 1.6vh, 22px) clamp(12px, 1.8vw, 28px); gap: clamp(8px, 1.4vh, 18px); }
+  .app { display: flex; flex-direction: column; height: 100vh; padding: clamp(10px, 1.6vh, 22px) clamp(12px, 1.8vw, 28px); gap: clamp(8px, 1.4vh, 18px); position: relative; }
 
   /* ---------------- header ---------------- */
   header {
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    background: linear-gradient(100deg, var(--panel-solid) 0%, #16203a 60%, #12233f 100%);
+    background: linear-gradient(100deg, var(--panel-solid) 0%, #141031 55%, #0d2430 100%);
     border: 1px solid var(--hairline-2);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: clamp(10px, 1.8vh, 18px) clamp(14px, 2vw, 26px);
+  }
+  header::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
   }
   header::after {
     content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 30%;
@@ -67,14 +83,15 @@
   }
   .brand { min-width: 0; }
   .brand h1 {
-    font-size: clamp(20px, 3.4vh, 34px); font-weight: 800; letter-spacing: 0.06em;
+    font-size: clamp(22px, 3.8vh, 38px); font-weight: 900; letter-spacing: 0.05em;
     text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: linear-gradient(90deg, #ffffff 10%, #c9b8ff 55%, #8fe8dc 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .brand h1 .bar { color: var(--accent); }
   .brand p { color: var(--ink-2); font-size: clamp(11px, 1.7vh, 16px); letter-spacing: 0.04em; margin-top: 2px; }
   .head-right { display: flex; align-items: center; gap: clamp(10px, 1.4vw, 22px); flex-shrink: 0; }
   .daychip {
-    border: 1px solid var(--hairline-2); border-radius: 10px; text-align: center;
+    border: 1px solid var(--hairline-2); border-radius: 12px; text-align: center;
     padding: 6px 14px; background: rgba(255,255,255,0.03);
   }
   .daychip .lbl { font-size: 10px; letter-spacing: 0.22em; color: var(--ink-3); }
@@ -90,16 +107,20 @@
   /* ---------------- main grid ---------------- */
   main { flex: 1; display: grid; grid-template-columns: minmax(260px, 4fr) 9fr; gap: clamp(8px, 1.4vw, 18px); min-height: 0; }
   .panel {
-    background: var(--panel); border: 1px solid var(--hairline); border-radius: 14px;
+    background: var(--panel); border: 1px solid var(--hairline); border-radius: 16px;
     display: flex; flex-direction: column; min-height: 0; overflow: hidden;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
   }
   .panel-title {
     display: flex; align-items: center; gap: 10px;
     font-size: clamp(11px, 1.6vh, 14px); font-weight: 800; letter-spacing: 0.24em; color: var(--ink-2);
     padding: clamp(10px, 1.6vh, 16px) clamp(14px, 1.6vw, 20px) 0;
   }
-  .panel-title::before { content: ""; width: 4px; height: 16px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+  .panel-title::before {
+    content: ""; width: 4px; height: 16px; border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
 
   /* left column */
   .left { display: flex; flex-direction: column; gap: clamp(8px, 1.4vh, 18px); min-height: 0; }
@@ -107,16 +128,16 @@
   .qrpanel { flex: 1; display: flex; flex-direction: row; align-items: center; gap: clamp(10px, 1.4vw, 18px); padding: clamp(10px, 1.6vh, 18px) clamp(14px, 1.6vw, 20px); }
   .qrbox {
     width: clamp(84px, 15vh, 150px); aspect-ratio: 1; flex-shrink: 0;
-    border: 2px dashed var(--hairline-2); border-radius: 12px;
+    border: 2px dashed var(--hairline-2); border-radius: 14px;
     display: flex; align-items: center; justify-content: center; text-align: center;
     color: var(--ink-3); font-size: 11px; letter-spacing: 0.12em; font-weight: 700; padding: 8px;
     background: rgba(255,255,255,0.02);
   }
-  .qrbox img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
+  .qrbox img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
   .qrtext .t1 { font-size: clamp(14px, 2.4vh, 20px); font-weight: 800; }
   .qrtext .t2 { color: var(--ink-2); font-size: clamp(11px, 1.7vh, 14px); margin-top: 4px; line-height: 1.45; }
 
-  /* right column — TOP 20 leaderboard, two columns of 10 */
+  /* right column — leaderboard, two columns of 10 per page */
   .board { flex: 1; }
   .board-cols {
     flex: 1; min-height: 0;
@@ -128,7 +149,7 @@
   .lb-col + .lb-col { border-left: 1px solid var(--hairline); padding-left: clamp(10px, 1.2vw, 20px); }
   .lb-head, .lb-row {
     display: grid;
-    grid-template-columns: clamp(38px, 3.6vw, 56px) 1fr clamp(76px, 7vw, 108px);
+    grid-template-columns: clamp(40px, 3.8vw, 58px) 1fr clamp(76px, 7vw, 108px);
     align-items: center; gap: clamp(6px, 0.8vw, 12px);
     padding: 0 clamp(8px, 1vw, 14px);
   }
@@ -145,22 +166,36 @@
     color: var(--ink-3); font-size: clamp(9px, 1.3vh, 11px); font-weight: 800; letter-spacing: 0.08em;
     transition: all .3s ease;
   }
-  .pgdot.on { color: #cfe3ff; border-color: rgba(57,135,229,0.55); background: var(--accent-soft); }
+  .pgdot.on { color: #ddd2ff; border-color: rgba(139,92,246,0.55); background: var(--accent-soft); }
   .board-cols.flip { animation: page-in .5s ease both; }
   @keyframes page-in { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
   .lb-body { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; min-height: 0; padding: clamp(4px, 0.8vh, 8px) 0; }
   .lb-row {
-    flex: 1; max-height: 60px; min-height: 0; border-radius: 10px;
-    margin: 1px 2px; animation: row-in .4s ease both;
+    position: relative; flex: 1; max-height: 60px; min-height: 0; border-radius: 12px;
+    margin: 1px 2px; animation: row-in .4s ease both; overflow: hidden;
   }
+  /* score-progress bar along the bottom of each row (width set inline) */
+  .lb-row .bar {
+    position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    opacity: 0.55; transition: width .6s ease;
+  }
+  .lb-row.champ .bar { background: linear-gradient(90deg, #b58a10, var(--gold)); opacity: 0.8; }
   .lb-row.up { animation: flash-up 1.6s ease-out; }
   .lb-row.champ {
     background: linear-gradient(90deg, var(--gold-soft), transparent 70%);
     box-shadow: inset 0 0 0 1px rgba(245,197,66,0.5), 0 0 18px rgba(245,197,66,0.12);
   }
+  .lb-row.r2 { background: linear-gradient(90deg, rgba(192,200,212,0.10), transparent 70%); }
+  .lb-row.r3 { background: linear-gradient(90deg, rgba(208,138,78,0.10), transparent 70%); }
   .lb-row.champ.newchamp { animation: flash-gold 1.8s ease-out; }
-  .rank { display: flex; align-items: center; gap: 4px; font-weight: 900; font-size: clamp(13px, 2.2vh, 20px); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-  .rank .medal { font-size: clamp(12px, 2vh, 18px); }
+  .rank { display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: clamp(12px, 2vh, 17px); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .rank .num {
+    min-width: clamp(26px, 3.6vh, 34px); height: clamp(26px, 3.6vh, 34px);
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 9px; background: rgba(255,255,255,0.045); border: 1px solid var(--hairline);
+  }
+  .rank .medal { font-size: clamp(14px, 2.4vh, 22px); }
   .champ .rank, .r2 .rank, .r3 .rank { color: var(--ink); }
   /* arcade-style gamer tags — always displayed uppercase */
   .pname { font-weight: 700; font-size: clamp(13px, 2.2vh, 19px); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -172,7 +207,7 @@
   /* ---------------- footer ---------------- */
   footer {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
-    background: var(--panel); border: 1px solid var(--hairline); border-radius: 14px;
+    background: var(--panel); border: 1px solid var(--hairline); border-radius: 16px;
     padding: clamp(8px, 1.6vh, 16px) clamp(14px, 2vw, 26px);
   }
   .handles { display: flex; gap: clamp(10px, 1.6vw, 24px); flex-wrap: wrap; }
@@ -180,12 +215,12 @@
   .handle .ic {
     width: clamp(20px, 3vh, 26px); height: clamp(20px, 3vh, 26px); border-radius: 7px;
     display: inline-flex; align-items: center; justify-content: center;
-    background: var(--accent-soft); color: #cfe3ff; font-size: clamp(10px, 1.5vh, 12px); font-weight: 800;
-    border: 1px solid rgba(57,135,229,0.4);
+    background: var(--accent-soft); color: #ddd2ff; font-size: clamp(10px, 1.5vh, 12px); font-weight: 800;
+    border: 1px solid rgba(139,92,246,0.4);
   }
   .hashtag {
     font-size: clamp(14px, 2.6vh, 24px); font-weight: 900; letter-spacing: 0.03em;
-    background: linear-gradient(90deg, #6db1ff, #b9d9ff);
+    background: linear-gradient(90deg, #b79bff, #8fe8dc);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     white-space: nowrap;
   }
@@ -194,13 +229,13 @@
   /* waiting / error state */
   .overlay {
     position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-    background: rgba(10, 14, 21, 0.9); z-index: 50; text-align: center;
+    background: rgba(6, 8, 15, 0.9); z-index: 50; text-align: center;
   }
   .overlay.show { display: flex; }
   .overlay .box { max-width: 520px; padding: 32px; }
   .overlay h2 { font-size: 22px; letter-spacing: 0.2em; margin-bottom: 12px; color: var(--ink-2); }
   .overlay p { color: var(--ink-3); line-height: 1.6; font-size: 14px; }
-  .overlay code { color: #9cc4f5; }
+  .overlay code { color: #c4b0f7; }
   .spin {
     width: 34px; height: 34px; margin: 0 auto 18px; border-radius: 50%;
     border: 3px solid var(--hairline-2); border-top-color: var(--accent);
@@ -269,7 +304,7 @@
     </div>
 
     <section class="panel board">
-      <div class="panel-title">TOP 40 — LEADERBOARD
+      <div class="panel-title">LEADERBOARD — TOP 40
         <span class="pagebar"><span class="pgdot on" id="pg0">1–20</span><span class="pgdot" id="pg1">21–40</span></span>
       </div>
       <div class="board-cols" id="boardCols">
@@ -322,9 +357,9 @@ const TOP_N = 40;        /* total ranks shown across all pages */
 const PAGE_SIZE = 20;    /* ranks per screen (two columns of 10) */
 const ROTATE_MS = 10000; /* page flip: 1–20 <-> 21–40 */
 
-/* v3: brand info still comes from the Display tab, but the leaderboard now
-   reads the Players tab directly and computes ranks client-side — no
-   top1..topN rows needed, any TOP_N works.
+/* Brand info comes from the Display tab; the leaderboard reads the
+   Players tab directly and computes ranks client-side — no top1..topN
+   rows needed, any TOP_N works.
    Override the sheet with scoreboard.html?sheet=<SHEET_ID>. */
 const QS = new URLSearchParams(location.search);
 const SID = QS.get("sheet") || SHEET_ID;
@@ -397,11 +432,7 @@ function setText(id, v) { const el = $(id); if (el.textContent !== String(v)) el
 
 function renderBrand(d) {
   const dayNum = { A: "1 / 3", B: "2 / 3", C: "3 / 3" }[d.day] || d.day;
-  const brandName = d.company.toUpperCase();
-  $("company").innerHTML = "";
-  $("company").append(brandName + " ");
-  const bar = document.createElement("span"); bar.className = "bar"; bar.textContent = "// GAME ZONE";
-  $("company").appendChild(bar);
+  setText("company", d.company.toUpperCase());
   setText("tagline", d.tagline);
   setText("dayval", dayNum);
   setText("igHandle", d.ig); setText("fbHandle", d.fb); setText("hashtag", d.hashtag);
@@ -438,6 +469,7 @@ function renderBoard(flip, firstLoad, newChamp) {
   }
   const bodies = [$("lbBodyA"), $("lbBodyB")];
   bodies.forEach(b => { b.innerHTML = ""; });
+  const leader = lastTop[0] ? lastTop[0].score : 0;
   const start = page * PAGE_SIZE;
   for (let k = 0; k < PAGE_SIZE; k++) {
     const i = start + k;                     /* absolute rank index */
@@ -446,19 +478,21 @@ function renderBoard(flip, firstLoad, newChamp) {
     const p = lastTop[i];
     row.className = "lb-row" + (i === 0 ? " champ" : i === 1 ? " r2" : i === 2 ? " r3" : "");
     if (!p) {
-      row.innerHTML = `<div class="rank">${i + 1}</div>
+      row.innerHTML = `<div class="rank"><span class="num">${i + 1}</span></div>
         <div class="empty-slot">— open slot, your name here —</div><div></div>`;
       body.appendChild(row); continue;
     }
     if (p.up || p.isNew) row.classList.add("up");
     if (i === 0 && newChamp) row.classList.add("newchamp");
     row.style.animationDelay = firstLoad ? (k * 0.04) + "s" : "0s";
-    const medal = i < 3 ? `<span class="medal">${MEDALS[i]}</span>` : (i + 1);
+    const medal = i < 3 ? `<span class="medal">${MEDALS[i]}</span>` : `<span class="num">${i + 1}</span>`;
     const delta = p.up ? `<span class="delta">▲${p.delta}</span>` : (p.isNew ? `<span class="delta">NEW</span>` : "");
+    const pct = leader > 0 ? Math.max(2, Math.round(p.score / leader * 100)) : 0;
     row.innerHTML =
       `<div class="rank">${medal}</div>
        <div class="pname">${esc(p.name)}${delta}</div>
-       <div class="score">${p.score.toLocaleString()}</div>`;
+       <div class="score">${p.score.toLocaleString()}</div>
+       <span class="bar" style="width:${pct}%"></span>`;
     body.appendChild(row);
   }
 }
