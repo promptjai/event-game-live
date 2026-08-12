@@ -214,6 +214,7 @@ async function fetchBrand() {
     company: (map.company || [""])[0] || "Event Game",
     hashtag: (map.hashtag || [""])[0] || "",
     ig: (map.ig || [""])[0] || "", fb: (map.fb || [""])[0] || "",
+    template: (map.template || [""])[0] || "",
   };
   return brand;
 }
@@ -324,18 +325,113 @@ function renderCard(b) {
 function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 
 /* ---------------- share card image (canvas -> native share sheet) ----------------
-   1080x1350 (4:5) — posts clean to IG feed, FB, TikTok photo, and stories.
-   Fight-poster layout: full-bleed bg, tag on an angled banner, giant rank,
-   full-width hashtag band at the bottom. */
-function drawShareCard() {
+   1080x1350 (4:5) — "Deadline Fighter" fight-poster design.
+   The static artwork (fire frame, event logos, RANK header, hashtag footer)
+   comes from the template JPG exported from the design mockup with the middle
+   left empty. Put it next to this page as  share-template.jpg , or point at a
+   hosted copy with ?template=<url> or a "template" row in the Display tab.
+   Only the dynamic fields are drawn on top:
+     name plate · CURRENT RANK · giant metallic rank · of-N chip · TOTAL SCORE.
+   If the template image can't load, a canvas-drawn approximation of the same
+   design is used so sharing still works. */
+const CARD_FONT = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
+let tpl = { src: null, img: null };
+function loadTemplate(src) {
+  if (tpl.src === src) return Promise.resolve(tpl.img);
+  return new Promise(resolve => {
+    const img = new Image();
+    if (/^https?:/i.test(src)) img.crossOrigin = "anonymous";
+    img.onload = () => { tpl = { src, img }; resolve(img); };
+    img.onerror = () => { tpl = { src, img: null }; resolve(null); };
+    img.src = src;
+  });
+}
+
+async function drawShareCard() {
   const { p, count } = current;
   const b = brand;
   const cv = $("shareCanvas"), ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
+  const F = CARD_FONT;
   ctx.clearRect(0, 0, W, H);
   const isTop3 = p.total > 0 && p.rank <= 3;
   const rankTxt = p.total > 0 ? "#" + p.rank : "NEW";
-  const F = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
+
+  const img = await loadTemplate(QS.get("template") || b.template || "share-template.jpg");
+  if (!img) { drawFallbackCard(ctx, W, H, b, p, count, isTop3, rankTxt); return; }
+
+  /* template artwork as the full background; only dynamic fields drawn on top */
+  ctx.drawImage(img, 0, 0, W, H);
+  ctx.textAlign = "center";
+
+  /* --- name plate: dark banner with red-hot edges --- */
+  const tagSize = fitFont(ctx, p.tag, "italic 900", F, 92, W - 440);
+  const plateW = Math.max(600, ctx.measureText(p.tag.toUpperCase()).width + 170);
+  const plateH = tagSize + 62, plateY = 398, skew = 14;
+  const px = W / 2 - plateW / 2;
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  banner(ctx, px + 10, plateY + 12, plateW, plateH, skew); ctx.fill();
+  let g = ctx.createLinearGradient(px, 0, px + plateW, 0);
+  g.addColorStop(0, "#9b1220"); g.addColorStop(0.28, "#241518");
+  g.addColorStop(0.72, "#241518"); g.addColorStop(1, "#9b1220");
+  ctx.fillStyle = g;
+  banner(ctx, px, plateY, plateW, plateH, skew); ctx.fill();
+  ctx.fillStyle = "#ffffff"; ctx.font = "italic 900 " + tagSize + "px " + F;
+  ctx.fillText(p.tag.toUpperCase(), W / 2, plateY + plateH / 2 + tagSize * 0.35);
+
+  /* --- CURRENT RANK label --- */
+  ctx.fillStyle = "#b7bcc7"; ctx.font = "800 34px " + F;
+  ctx.fillText(spaced("CURRENT RANK"), W / 2, 592);
+
+  /* --- giant metallic rank (silver; gold for top 3) --- */
+  const rankFont = rankTxt.length > 4 ? 230 : rankTxt.length > 3 ? 280 : 330;
+  const rankBase = 845;
+  ctx.font = "italic 900 " + rankFont + "px " + F;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillText(rankTxt, W / 2 + 7, rankBase + 9);
+  g = ctx.createLinearGradient(0, rankBase - rankFont * 0.78, 0, rankBase);
+  if (isTop3) { g.addColorStop(0, "#fff3cf"); g.addColorStop(0.55, "#f5c542"); g.addColorStop(1, "#b9871a"); }
+  else { g.addColorStop(0, "#ffffff"); g.addColorStop(0.55, "#ccd3dd"); g.addColorStop(1, "#828d9e"); }
+  ctx.fillStyle = g;
+  ctx.fillText(rankTxt, W / 2, rankBase);
+
+  /* --- "of N players" chip --- */
+  ctx.font = "italic 700 38px " + F;
+  const ofTxt = "of " + count.toLocaleString() + " players";
+  const ofW = ctx.measureText(ofTxt).width + 90;
+  const ofY = 890;
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  banner(ctx, W / 2 - ofW / 2 + 7, ofY + 8, ofW, 64, 11); ctx.fill();
+  ctx.fillStyle = "#26262c";
+  banner(ctx, W / 2 - ofW / 2, ofY, ofW, 64, 11); ctx.fill();
+  ctx.fillStyle = "#f2f2f5";
+  ctx.fillText(ofTxt, W / 2, ofY + 45);
+
+  /* --- TOTAL SCORE line: 🥊 TOTAL SCORE <gold number> --- */
+  const scoreTxt = p.total.toLocaleString();
+  ctx.font = "italic 900 108px " + F;
+  const scoreW = ctx.measureText(scoreTxt).width;
+  ctx.font = "italic 900 46px " + F;
+  const lblW = ctx.measureText("TOTAL SCORE").width;
+  const gap = 36, gloveW = 78;
+  let x = W / 2 - (gloveW + gap + lblW + gap + scoreW) / 2;
+  const baseY = 1068;
+  ctx.textAlign = "left";
+  ctx.font = "66px " + F;
+  ctx.fillText("🥊", x, baseY); x += gloveW + gap;
+  ctx.fillStyle = "#ffffff"; ctx.font = "italic 900 46px " + F;
+  ctx.fillText("TOTAL SCORE", x, baseY); x += lblW + gap;
+  g = ctx.createLinearGradient(0, baseY - 96, 0, baseY);
+  g.addColorStop(0, "#ffe9a8"); g.addColorStop(1, "#e2a42b");
+  ctx.fillStyle = g; ctx.font = "italic 900 108px " + F;
+  ctx.fillText(scoreTxt, x, baseY);
+  ctx.textAlign = "center";
+}
+
+/* Fully canvas-drawn card for when the template JPG isn't available —
+   same fight-night design language, self-contained. */
+function drawFallbackCard(ctx, W, H, b, p, count, isTop3, rankTxt) {
+  const F = CARD_FONT;
   const GOLD = "#f5c542", RED = "#e0242e", INK = "#0b0606";
   const hero = isTop3 ? GOLD : RED;
   const heroDark = isTop3 ? "#8a6a14" : "#6e0d12";
@@ -507,7 +603,7 @@ function spaced(s) { return s.split("").join(" "); }
 
 async function share() {
   if (!current) return;
-  drawShareCard();
+  await drawShareCard();
   const blob = await new Promise(r => $("shareCanvas").toBlob(r, "image/png"));
   const file = new File([blob], "my-rank.png", { type: "image/png" });
   const caption = "อันดับ " + (current.p.total > 0 ? "#" + current.p.rank : "NEW") +
