@@ -530,6 +530,29 @@ function loadQR(boxId, sources) {
 loadQR("qrReg",  ["qr-register.png", "qr.png"]);
 loadQR("qrRank", ["qr-rank.png"]);
 
+/* ---------------- background template artwork ----------------
+   Drop the event's screen artwork next to this file as
+     scoreboard-template.jpg   (or .png)
+   or point at a hosted copy with scoreboard.html?bg=<url>.
+   It's drawn full-bleed behind the panels under a dark scrim so the
+   leaderboard stays readable; without the file, the built-in CSS
+   background is used. */
+(function () {
+  const sources = [QS.get("bg"), "scoreboard-template.jpg", "scoreboard-template.png"].filter(Boolean);
+  (function tryNext(i) {
+    if (i >= sources.length) return;
+    const img = new Image();
+    img.onload = () => {
+      document.body.style.backgroundImage =
+        "linear-gradient(rgba(11,6,6,0.68), rgba(11,6,6,0.68)), url('" + sources[i] + "')";
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundPosition = "center";
+    };
+    img.onerror = () => tryNext(i + 1);
+    img.src = sources[i];
+  })(0);
+})();
+
 /* ---------------- data loop ---------------- */
 let failures = 0;
 async function tick() {
