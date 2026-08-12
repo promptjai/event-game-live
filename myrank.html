@@ -210,6 +210,7 @@ async function fetchBrand() {
     company: (map.company || [""])[0] || "Game Zone",
     hashtag: (map.hashtag || [""])[0] || "",
     ig: (map.ig || [""])[0] || "", fb: (map.fb || [""])[0] || "",
+    template: (map.template || [""])[0] || "",
   };
   return brand;
 }
@@ -320,146 +321,168 @@ function renderCard(b) {
 function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 
 /* ---------------- share card image (canvas -> native share sheet) ----------------
-   1080x1350 (4:5) — posts clean to IG feed, FB, TikTok photo, and stories.
-   Fight-poster layout: full-bleed bg, tag on an angled banner, giant rank,
-   full-width hashtag band at the bottom. */
-function drawShareCard() {
+   1080x1350 (4:5) — "Deadline Fighter" fight-poster design.
+   The static artwork (fire frame, event logos, RANK header, hashtag footer)
+   comes from the template JPG exported from the design mockup with the middle
+   left empty. Put it next to this page as  share-template.jpg , or point at a
+   hosted copy with ?template=<url> or a "template" row in the Display tab.
+   Only the dynamic fields are drawn on top:
+     name plate · CURRENT RANK · giant metallic rank · of-N chip · TOTAL SCORE.
+   If the template image can't load, a canvas-drawn approximation of the same
+   design is used so sharing still works. */
+const CARD_FONT = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
+let tpl = { src: null, img: null };
+function loadTemplate(src) {
+  if (tpl.src === src) return Promise.resolve(tpl.img);
+  return new Promise(resolve => {
+    const img = new Image();
+    if (/^https?:/i.test(src)) img.crossOrigin = "anonymous";
+    img.onload = () => { tpl = { src, img }; resolve(img); };
+    img.onerror = () => { tpl = { src, img: null }; resolve(null); };
+    img.src = src;
+  });
+}
+
+async function drawShareCard() {
   const { p, count } = current;
   const b = brand;
   const cv = $("shareCanvas"), ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
+  const F = CARD_FONT;
   ctx.clearRect(0, 0, W, H);
+
+  const img = await loadTemplate(QS.get("template") || b.template || "share-template.jpg");
+  if (img) ctx.drawImage(img, 0, 0, W, H);
+  else drawTemplateFallback(ctx, W, H, b);
+
   const isTop3 = p.total > 0 && p.rank <= 3;
   const rankTxt = p.total > 0 ? "#" + p.rank : "NEW";
-  const F = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
-  const GOLD = "#f5c542", BLUE = "#3987e5", INK = "#0a0e15";
-  const hero = isTop3 ? GOLD : BLUE;
-  const heroDark = isTop3 ? "#8a6a14" : "#1d4f92";
-
-  /* --- background: deep navy, center glow, bold diagonal beams --- */
-  let g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, "#0e1526"); g.addColorStop(0.6, INK); g.addColorStop(1, INK);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  g = ctx.createRadialGradient(W / 2, 700, 80, W / 2, 700, 660);
-  g.addColorStop(0, isTop3 ? "rgba(245,197,66,0.22)" : "rgba(57,135,229,0.28)");
-  g.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  ctx.save();
-  ctx.translate(W / 2, H / 2); ctx.rotate(-0.24);
-  for (let i = -9; i <= 9; i++) {
-    ctx.fillStyle = "rgba(255,255,255," + (i % 2 ? 0.012 : 0.03) + ")";
-    ctx.fillRect(-W * 1.2, i * 92, W * 2.4, 46);
-  }
-  ctx.restore();
-  /* faint giant outline echo of the rank behind everything */
-  ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 3;
-  ctx.font = "900 560px " + F; ctx.textAlign = "center";
-  ctx.strokeText(rankTxt, W / 2, 940);
-  ctx.restore();
-
   ctx.textAlign = "center";
 
-  /* --- header row: company left, LIVE pill right --- */
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#f2f5fa"; ctx.font = "800 38px " + F;
-  ctx.fillText(b.company.toUpperCase(), 70, 116);
-  ctx.fillStyle = hero; ctx.font = "800 24px " + F;
-  ctx.fillText(spaced("LIVE SCORE CARD"), 70, 158);
-  /* LIVE pill */
-  ctx.fillStyle = "rgba(255,93,93,0.14)";
-  roundRect(ctx, W - 250, 78, 180, 62, 31); ctx.fill();
-  ctx.strokeStyle = "rgba(255,93,93,0.5)"; ctx.lineWidth = 2;
-  roundRect(ctx, W - 250, 78, 180, 62, 31); ctx.stroke();
-  ctx.fillStyle = "#ff5d5d";
-  ctx.beginPath(); ctx.arc(W - 218, 109, 9, 0, 7); ctx.fill();
-  ctx.font = "800 28px " + F; ctx.fillText("LIVE", W - 196, 119);
-  ctx.textAlign = "center";
-
-  /* --- player tag: dark text on a big angled hero banner --- */
-  const tagSize = fitFont(ctx, p.tag, 900, F, 100, W - 340);
-  const bannerH = tagSize + 74, bannerY = 250, skew = 26;
-  const bw = ctx.measureText(p.tag.toUpperCase()).width + 150;
-  const bx = W / 2 - bw / 2;
-  /* drop shadow band */
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
-  banner(ctx, bx + 14, bannerY + 16, bw, bannerH, skew); ctx.fill();
-  g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-  g.addColorStop(0, hero); g.addColorStop(1, isTop3 ? "#ffdf7e" : "#63a5f0");
+  /* --- name plate: dark banner with red-hot edges --- */
+  const tagSize = fitFont(ctx, p.tag, "italic 900", F, 92, W - 440);
+  const plateW = Math.max(600, ctx.measureText(p.tag.toUpperCase()).width + 170);
+  const plateH = tagSize + 62, plateY = 398, skew = 14;
+  const px = W / 2 - plateW / 2;
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  banner(ctx, px + 10, plateY + 12, plateW, plateH, skew); ctx.fill();
+  let g = ctx.createLinearGradient(px, 0, px + plateW, 0);
+  g.addColorStop(0, "#9b1220"); g.addColorStop(0.28, "#241518");
+  g.addColorStop(0.72, "#241518"); g.addColorStop(1, "#9b1220");
   ctx.fillStyle = g;
-  banner(ctx, bx, bannerY, bw, bannerH, skew); ctx.fill();
-  ctx.fillStyle = INK; ctx.font = "900 " + tagSize + "px " + F;
-  ctx.fillText(p.tag.toUpperCase(), W / 2, bannerY + bannerH / 2 + tagSize * 0.36);
+  banner(ctx, px, plateY, plateW, plateH, skew); ctx.fill();
+  ctx.fillStyle = "#ffffff"; ctx.font = "italic 900 " + tagSize + "px " + F;
+  ctx.fillText(p.tag.toUpperCase(), W / 2, plateY + plateH / 2 + tagSize * 0.35);
 
-  /* --- rank hero --- */
-  ctx.fillStyle = "#9aa6ba"; ctx.font = "800 30px " + F;
-  ctx.fillText(spaced("CURRENT RANK"), W / 2, 505);
-  const rankFont = rankTxt.length > 4 ? 240 : rankTxt.length > 3 ? 290 : 340;
-  ctx.save();
-  ctx.shadowColor = isTop3 ? "rgba(245,197,66,0.55)" : "rgba(57,135,229,0.55)";
-  ctx.shadowBlur = 80;
-  g = ctx.createLinearGradient(0, 540, 0, 870);
-  if (isTop3) { g.addColorStop(0, "#fff3cf"); g.addColorStop(1, GOLD); }
-  else { g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#9cc4f5"); }
+  /* --- CURRENT RANK label --- */
+  ctx.fillStyle = "#b7bcc7"; ctx.font = "800 34px " + F;
+  ctx.fillText(spaced("CURRENT RANK"), W / 2, 592);
+
+  /* --- giant metallic rank (silver; gold for top 3) --- */
+  const rankFont = rankTxt.length > 4 ? 230 : rankTxt.length > 3 ? 280 : 330;
+  const rankBase = 845;
+  ctx.font = "italic 900 " + rankFont + "px " + F;
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillText(rankTxt, W / 2 + 7, rankBase + 9);
+  g = ctx.createLinearGradient(0, rankBase - rankFont * 0.78, 0, rankBase);
+  if (isTop3) { g.addColorStop(0, "#fff3cf"); g.addColorStop(0.55, "#f5c542"); g.addColorStop(1, "#b9871a"); }
+  else { g.addColorStop(0, "#ffffff"); g.addColorStop(0.55, "#ccd3dd"); g.addColorStop(1, "#828d9e"); }
   ctx.fillStyle = g;
-  ctx.font = "900 " + rankFont + "px " + F;
-  ctx.fillText(rankTxt, W / 2, 850);
-  ctx.restore();
-  if (isTop3) {
-    ctx.font = "96px " + F;
-    ctx.fillText(["🥇", "🥈", "🥉"][p.rank - 1], W / 2 + (rankTxt.length > 2 ? 270 : 215), 620);
-  }
-  /* "of N players" pill */
-  ctx.font = "700 34px " + F;
+  ctx.fillText(rankTxt, W / 2, rankBase);
+
+  /* --- "of N players" chip --- */
+  ctx.font = "italic 700 38px " + F;
   const ofTxt = "of " + count.toLocaleString() + " players";
-  const ofW = ctx.measureText(ofTxt).width + 76;
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
-  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 31); ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = 2;
-  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 31); ctx.stroke();
-  ctx.fillStyle = "#c6d2e4"; ctx.fillText(ofTxt, W / 2, 935);
+  const ofW = ctx.measureText(ofTxt).width + 90;
+  const ofY = 890;
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  banner(ctx, W / 2 - ofW / 2 + 7, ofY + 8, ofW, 64, 11); ctx.fill();
+  ctx.fillStyle = "#26262c";
+  banner(ctx, W / 2 - ofW / 2, ofY, ofW, 64, 11); ctx.fill();
+  ctx.fillStyle = "#f2f2f5";
+  ctx.fillText(ofTxt, W / 2, ofY + 45);
 
-  /* --- score strip: TOTAL big + game chips --- */
-  ctx.fillStyle = "#5d6a80"; ctx.font = "800 26px " + F;
-  ctx.fillText(spaced("TOTAL SCORE"), W / 2, 1032);
-  ctx.fillStyle = "#f2f5fa"; ctx.font = "900 96px " + F;
-  ctx.fillText(p.total.toLocaleString(), W / 2, 1128);
-  const parts = [];
-  if (p.punch) parts.push("🥊 PUNCH " + p.punch.toLocaleString());
-  if (p.scream) parts.push("📣 SCREAM +" + p.scream.toLocaleString());
-  if (parts.length) {
-    ctx.font = "700 30px " + F;
-    let x = W / 2 - (parts.length - 1) * 190;
-    for (const t of parts) {
-      const cw = ctx.measureText(t).width + 56;
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      roundRect(ctx, x - cw / 2, 1152, cw, 56, 28); ctx.fill();
-      ctx.fillStyle = "#9aa6ba"; ctx.fillText(t, x, 1191);
-      x += 380;
-    }
+  /* --- TOTAL SCORE line: 🥊 TOTAL SCORE <gold number> --- */
+  const scoreTxt = p.total.toLocaleString();
+  ctx.font = "italic 900 108px " + F;
+  const scoreW = ctx.measureText(scoreTxt).width;
+  ctx.font = "italic 900 46px " + F;
+  const lblW = ctx.measureText("TOTAL SCORE").width;
+  const gap = 36, gloveW = 78;
+  let x = W / 2 - (gloveW + gap + lblW + gap + scoreW) / 2;
+  const baseY = 1068;
+  ctx.textAlign = "left";
+  ctx.font = "66px " + F;
+  ctx.fillText("🥊", x, baseY); x += gloveW + gap;
+  ctx.fillStyle = "#ffffff"; ctx.font = "italic 900 46px " + F;
+  ctx.fillText("TOTAL SCORE", x, baseY); x += lblW + gap;
+  g = ctx.createLinearGradient(0, baseY - 96, 0, baseY);
+  g.addColorStop(0, "#ffe9a8"); g.addColorStop(1, "#e2a42b");
+  ctx.fillStyle = g; ctx.font = "italic 900 108px " + F;
+  ctx.fillText(scoreTxt, x, baseY);
+  ctx.textAlign = "center";
+}
+
+/* Approximation of the template artwork for when the JPG isn't available:
+   charcoal bg, red smoke, fire bands top + bottom, header + hashtag footer. */
+function drawTemplateFallback(ctx, W, H, b) {
+  const F = CARD_FONT;
+  let g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#161312"); g.addColorStop(0.5, "#0d0b0b"); g.addColorStop(1, "#140d09");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  g = ctx.createRadialGradient(W * 0.32, H * 0.42, 60, W * 0.32, H * 0.42, 540);
+  g.addColorStop(0, "rgba(140,20,25,0.30)"); g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  flameBand(ctx, W, 224, 332);
+  flameBand(ctx, W, H - 210, H);
+
+  /* red slashes framing header + footer */
+  ctx.fillStyle = "#c8102e";
+  ctx.fillRect(0, 336, W, 7);
+  ctx.fillRect(0, H - 218, W, 7);
+
+  /* top-left event name / top-right game title */
+  ctx.textAlign = "left";
+  g = ctx.createLinearGradient(0, 70, 0, 150);
+  g.addColorStop(0, "#ffe9a8"); g.addColorStop(1, "#e2a42b");
+  ctx.fillStyle = g; ctx.font = "italic 900 44px " + F;
+  ctx.fillText(b.company.toUpperCase(), 56, 128);
+
+  /* header */
+  ctx.textAlign = "center"; ctx.fillStyle = "#ffffff";
+  ctx.font = "italic 900 58px " + F;
+  ctx.fillText("RANK นักสู้", W / 2, 306);
+
+  /* hashtag footer (up to two lines) */
+  const tags = (b.hashtag || "#GAMEZONE").split(/\s+/).filter(Boolean);
+  ctx.font = "italic 900 54px " + F;
+  ctx.fillText(tags[0] || "", W / 2, H - 128);
+  if (tags[1]) ctx.fillText(tags[1], W / 2, H - 60);
+}
+function flameBand(ctx, W, y0, y1) {
+  /* layered orange glow blobs along the band to fake fire */
+  const h = y1 - y0;
+  let g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, "rgba(255,120,20,0)"); g.addColorStop(0.65, "rgba(255,110,15,0.28)");
+  g.addColorStop(1, "rgba(200,60,5,0.10)");
+  ctx.fillStyle = g; ctx.fillRect(0, y0, W, h);
+  for (let i = 0; i < 14; i++) {
+    const x = ((i * 197 + 60) % W);
+    const r = 60 + (i * 53) % 70;
+    const cy = y0 + h * 0.72;
+    g = ctx.createRadialGradient(x, cy, 8, x, cy, r);
+    g.addColorStop(0, "rgba(255,170,40,0.34)");
+    g.addColorStop(0.6, "rgba(255,90,10,0.16)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, cy, r, 0, 7); ctx.fill();
   }
-
-  /* --- full-bleed angled hashtag band --- */
-  ctx.beginPath();
-  ctx.moveTo(0, 1268); ctx.lineTo(W, 1236); ctx.lineTo(W, H); ctx.lineTo(0, H);
-  ctx.closePath();
-  g = ctx.createLinearGradient(0, 0, W, 0);
-  g.addColorStop(0, heroDark); g.addColorStop(1, hero);
-  ctx.fillStyle = g; ctx.fill();
-  ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "900 44px " + F;
-  ctx.fillText((b.hashtag || "#GAMEZONE") + "  ·  COME BEAT ME 🔥", W / 2, 1318);
 }
 function banner(ctx, x, y, w, h, skew) {
   ctx.beginPath();
   ctx.moveTo(x + skew, y); ctx.lineTo(x + w, y);
   ctx.lineTo(x + w - skew, y + h); ctx.lineTo(x, y + h);
-  ctx.closePath();
-}
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
 }
 function fitFont(ctx, text, weight, family, start, maxW) {
@@ -472,7 +495,7 @@ function spaced(s) { return s.split("").join(" "); }
 
 async function share() {
   if (!current) return;
-  drawShareCard();
+  await drawShareCard();
   const blob = await new Promise(r => $("shareCanvas").toBlob(r, "image/png"));
   const file = new File([blob], "my-rank.png", { type: "image/png" });
   const caption = "อันดับ " + (current.p.total > 0 ? "#" + current.p.rank : "NEW") +
