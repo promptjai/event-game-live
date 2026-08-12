@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Rank — Event Game</title>
+<title>เช็คอันดับพลัง — My Rank</title>
 <style>
   /* Matches scoreboard.html "fight night" design tokens */
   :root {
@@ -114,8 +114,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="hCompany"><span class="bar">MY RANK</span></h1>
-    <p>พิมพ์ชื่อผู้เล่นของคุณเพื่อดูอันดับสด · Type your player name to see your live rank</p>
+    <h1 id="hCompany"><span class="bar">เช็คอันดับพลัง</span></h1>
+    <p>RANK ตัวตึง</p>
   </header>
 
   <div class="panel">
@@ -123,7 +123,7 @@
       <input type="text" id="tagInput" placeholder="เช่น / e.g. BEAMZILLA" autocomplete="off" autocapitalize="characters" enterkeyhint="search">
       <button id="goBtn">GO</button>
     </div>
-    <div class="hint">ชื่อผู้เล่นคือชื่อที่คุณตั้งตอนลงทะเบียน (ชื่อบนจอสกอร์บอร์ด)<br>Your player name is the one you chose at registration — the name on the big screen.</div>
+    <div class="hint">ชื่อนักสู้คือชื่อที่คุณตั้งตอนลงทะเบียน (ชื่อบนจอใหญ่)<br>Your fighter name is the one you chose at registration — the name on the big screen.</div>
   </div>
 
   <div class="msg" id="msg"></div>
@@ -136,7 +136,7 @@
     <div class="card-body">
       <div class="tag" id="cTag">—</div>
       <div class="rankline">
-        <div class="lbl">CURRENT RANK</div>
+        <div class="lbl">RANK นักสู้</div>
         <div><span class="bigrank" id="cRank">–</span></div>
         <div class="ofn" id="cOf">of – players</div>
       </div>
@@ -148,7 +148,7 @@
     </div>
     <div class="callout" id="cCallout"></div>
     <div class="card-actions">
-      <button id="shareBtn">📣 SHARE MY RANK</button>
+      <button id="shareBtn">📣 แชร์อันดับของฉัน</button>
       <button class="ghost" id="refreshBtn">↻</button>
     </div>
     <div class="hashtag-foot" id="cHashtag"></div>
@@ -283,7 +283,7 @@ async function lookup(rawTag, silent) {
 function renderCard(b) {
   const { p, count, cutoff } = current;
   $("cardCo").innerHTML = esc(b.company.toUpperCase()) + " <b>// LIVE RANK</b>";
-  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// MY RANK</span>';
+  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// เช็คอันดับพลัง</span>';
   $("cTag").textContent = p.tag;
   const rankEl = $("cRank");
   rankEl.textContent = p.total > 0 ? "#" + p.rank : "—";
@@ -297,23 +297,23 @@ function renderCard(b) {
   const playsLeft = Math.max(0, p.playsEarned - p.playsUsed);
   if (p.total === 0) {
     co.className = "callout";
-    co.textContent = "ยังไม่มีคะแนน — ไปที่บูธแล้วเริ่มต่อยเลย! 🥊 No score yet — head to the booth and throw your first punch!";
+    co.textContent = "ยังไม่มีคะแนน — ขึ้นสังเวียนแล้วปล่อยหมัดแรกเลย! 🥊 No score yet — step into the ring and throw your first punch!";
   } else if (p.rank === 1) {
     co.className = "callout gold";
-    co.textContent = "👑 คุณคือแชมป์! ป้องกันบัลลังก์ไว้ให้ได้ · You're the champion — defend that throne!";
+    co.textContent = "👑 ตัวตึงอันดับ 1! คุณคือแชมป์ — ป้องกันบัลลังก์ไว้ให้ได้ · You're the champ — defend that throne!";
   } else if (p.rank <= TOP_N) {
     co.className = "callout gold";
-    co.textContent = "🔥 คุณอยู่ใน TOP " + TOP_N + " บนจอใหญ่! ห่างแชมป์ " +
+    co.textContent = "🔥 ตัวตึงตัวจริง! คุณอยู่ใน TOP " + TOP_N + " บนจอใหญ่ — ห่างแชมป์อีก " +
       (current.leader - p.total).toLocaleString() + " คะแนน · You're in the TOP " + TOP_N +
       " on the big screen — " + (current.leader - p.total).toLocaleString() + " points behind the champ.";
   } else {
     const gap = Math.max(0, cutoff - p.total + 1);
     co.className = "callout";
-    co.textContent = "อีก " + gap.toLocaleString() + " คะแนนจะติด TOP " + TOP_N + "!" +
+    co.textContent = "อีก " + gap.toLocaleString() + " คะแนนจะติด TOP " + TOP_N + " — สู้ต่ออย่าถอย! 🥊" +
       (playsLeft > 0 ? " คุณเหลือสิทธิ์ต่อยอีก " + playsLeft + " ครั้ง" : "") +
       (!p.scream ? " หรือลองเกมตะโกนรับโบนัส 📣" : "") +
-      " · " + gap.toLocaleString() + " points to crack the TOP " + TOP_N +
-      (playsLeft > 0 ? " — you still have " + playsLeft + " punch play(s) left!" : "") +
+      " · " + gap.toLocaleString() + " points to crack the TOP " + TOP_N + " — keep fighting!" +
+      (playsLeft > 0 ? " You still have " + playsLeft + " punch play(s) left!" : "") +
       (!p.scream ? " Or try the scream game for a bonus!" : "");
   }
 
@@ -411,9 +411,10 @@ function drawShareCard() {
   ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "italic 900 " + tagSize + "px " + F;
   ctx.fillText(p.tag.toUpperCase(), W / 2, bannerY + bannerH / 2 + tagSize * 0.36);
 
-  /* --- rank hero: chrome / steel numeral --- */
-  ctx.fillStyle = "#b3a49e"; ctx.font = "800 30px " + F;
-  ctx.fillText(spaced("CURRENT RANK"), W / 2, 505);
+  /* --- rank hero: chrome / steel numeral ---
+     (no spaced() here — letter-spacing splits Thai combining marks) */
+  ctx.fillStyle = "#f5efec"; ctx.font = "italic 900 40px " + F;
+  ctx.fillText("RANK นักสู้", W / 2, 505);
   const rankFont = rankTxt.length > 4 ? 240 : rankTxt.length > 3 ? 290 : 340;
   ctx.save();
   ctx.shadowColor = isTop3 ? "rgba(245,197,66,0.5)" : "rgba(224,36,46,0.5)";
@@ -530,7 +531,7 @@ $("shareBtn").addEventListener("click", share);
 $("refreshBtn").addEventListener("click", () => current && lookup(current.p.tag));
 
 fetchBrand().then(b => {
-  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// MY RANK</span>';
+  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// เช็คอันดับพลัง</span>';
 }).catch(() => {});
 
 const initTag = QS.get("tag");
