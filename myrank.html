@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Rank — Event Game</title>
 <style>
-  /* Matches scoreboard.html broadcast design tokens */
+  /* Matches scoreboard.html "fight night" design tokens */
   :root {
     color-scheme: dark;
-    --bg: #0a0e15; --panel: rgba(18,24,38,0.85); --panel-solid: #121826;
+    --bg: #0b0606; --panel: rgba(24,13,12,0.85); --panel-solid: #170d0c;
     --hairline: rgba(255,255,255,0.08); --hairline-2: rgba(255,255,255,0.14);
-    --ink: #f2f5fa; --ink-2: #9aa6ba; --ink-3: #5d6a80;
-    --accent: #3987e5; --accent-soft: rgba(57,135,229,0.16); --accent-glow: rgba(57,135,229,0.45);
+    --ink: #f5efec; --ink-2: #b3a49e; --ink-3: #776761;
+    --accent: #e0242e; --accent-2: #ff9d2e;
+    --accent-soft: rgba(224,36,46,0.16); --accent-glow: rgba(224,36,46,0.5);
     --gold: #f5c542; --gold-soft: rgba(245,197,66,0.14); --good: #2ec27e;
     --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
   }
@@ -19,16 +20,19 @@
   body {
     font-family: var(--font); color: var(--ink); min-height: 100vh;
     background:
-      radial-gradient(900px 500px at 80% -10%, rgba(57,135,229,0.16), transparent 60%),
-      radial-gradient(700px 400px at 5% 110%, rgba(57,135,229,0.08), transparent 55%),
+      radial-gradient(900px 500px at 80% -10%, rgba(224,36,46,0.18), transparent 60%),
+      radial-gradient(700px 400px at 5% 110%, rgba(255,122,28,0.10), transparent 55%),
       var(--bg);
     display: flex; flex-direction: column; align-items: center;
     padding: 22px 16px 40px;
   }
   .wrap { width: 100%; max-width: 460px; }
   header { text-align: center; margin-bottom: 18px; }
-  header h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-  header h1 .bar { color: var(--accent); }
+  header h1 { font-size: 20px; font-weight: 900; font-style: italic; letter-spacing: 0.06em; text-transform: uppercase; }
+  header h1 .bar {
+    background: linear-gradient(180deg, #fff7e0 15%, #ffd98a 55%, #ff9d2e 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
   header p { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
 
   .panel {
@@ -47,7 +51,7 @@
   button {
     font: inherit; font-weight: 800; letter-spacing: 0.06em; border: none; cursor: pointer;
     border-radius: 12px; padding: 13px 18px; color: #fff;
-    background: linear-gradient(135deg, #3987e5, #2b6ec2);
+    background: linear-gradient(135deg, #e0242e, #a31119);
   }
   button:active { transform: translateY(1px); }
   .hint { color: var(--ink-3); font-size: 12px; margin-top: 10px; line-height: 1.5; }
@@ -61,12 +65,12 @@
   .card.show { display: block; animation: pop-in .45s cubic-bezier(.2,.9,.3,1.1); }
   @keyframes pop-in { from { opacity: 0; transform: scale(.94) translateY(12px);} to { opacity: 1; transform: none;} }
   .card-head {
-    background: linear-gradient(100deg, var(--panel-solid) 0%, #16203a 60%, #12233f 100%);
+    background: linear-gradient(100deg, var(--panel-solid) 0%, #33100f 60%, #47130f 100%);
     border-bottom: 1px solid var(--hairline-2); padding: 12px 18px;
     display: flex; justify-content: space-between; align-items: center;
   }
   .card-head .co { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
-  .card-head .co b { color: var(--accent); }
+  .card-head .co b { color: var(--accent-2); }
   .live { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.18em; color: #ff5d5d; }
   .live i { width: 7px; height: 7px; border-radius: 50%; background: #ff5d5d; animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1;} 50% { opacity: .4;} }
@@ -76,8 +80,8 @@
   .rankline { margin-top: 14px; }
   .rankline .lbl { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; color: var(--ink-3); }
   .bigrank {
-    font-size: 84px; font-weight: 900; line-height: 1.05; font-variant-numeric: tabular-nums;
-    background: linear-gradient(180deg, #ffffff 20%, #9cc4f5 100%);
+    font-size: 84px; font-weight: 900; font-style: italic; line-height: 1.05; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffffff 15%, #cfd6e0 45%, #8a93a3 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     text-shadow: 0 0 44px var(--accent-glow);
   }
@@ -93,15 +97,15 @@
 
   .callout {
     margin: 14px 16px 0; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.55;
-    background: var(--accent-soft); border: 1px solid rgba(57,135,229,0.35); color: #cfe3ff;
+    background: var(--accent-soft); border: 1px solid rgba(224,36,46,0.4); color: #ffd6ce;
   }
   .callout.gold { background: var(--gold-soft); border-color: rgba(245,197,66,0.4); color: #ffe9a8; }
 
   .card-actions { display: flex; gap: 10px; padding: 16px; }
   .card-actions button { flex: 1; }
   button.ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--hairline-2); color: var(--ink-2); }
-  .hashtag-foot { text-align: center; padding: 0 16px 16px; font-weight: 900; font-size: 15px;
-    background: linear-gradient(90deg, #6db1ff, #b9d9ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hashtag-foot { text-align: center; padding: 0 16px 16px; font-weight: 900; font-style: italic; font-size: 15px;
+    background: linear-gradient(90deg, #ffd98a, #ff7a3c); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
   .refreshed { text-align: center; color: var(--ink-3); font-size: 11px; margin-top: 12px; }
   canvas { display: none; }
@@ -332,29 +336,35 @@ function drawShareCard() {
   const isTop3 = p.total > 0 && p.rank <= 3;
   const rankTxt = p.total > 0 ? "#" + p.rank : "NEW";
   const F = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
-  const GOLD = "#f5c542", BLUE = "#3987e5", INK = "#0a0e15";
-  const hero = isTop3 ? GOLD : BLUE;
-  const heroDark = isTop3 ? "#8a6a14" : "#1d4f92";
+  const GOLD = "#f5c542", RED = "#e0242e", INK = "#0b0606";
+  const hero = isTop3 ? GOLD : RED;
+  const heroDark = isTop3 ? "#8a6a14" : "#6e0d12";
 
-  /* --- background: deep navy, center glow, bold diagonal beams --- */
+  /* --- background: charcoal black, ember glow, smoky diagonal streaks --- */
   let g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, "#0e1526"); g.addColorStop(0.6, INK); g.addColorStop(1, INK);
+  g.addColorStop(0, "#1c0d0c"); g.addColorStop(0.55, INK); g.addColorStop(1, "#150808");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  g = ctx.createRadialGradient(W / 2, 700, 80, W / 2, 700, 660);
-  g.addColorStop(0, isTop3 ? "rgba(245,197,66,0.22)" : "rgba(57,135,229,0.28)");
+  g = ctx.createRadialGradient(W / 2, 700, 80, W / 2, 700, 680);
+  g.addColorStop(0, isTop3 ? "rgba(245,197,66,0.20)" : "rgba(224,36,46,0.26)");
   g.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   ctx.save();
   ctx.translate(W / 2, H / 2); ctx.rotate(-0.24);
   for (let i = -9; i <= 9; i++) {
-    ctx.fillStyle = "rgba(255,255,255," + (i % 2 ? 0.012 : 0.03) + ")";
+    ctx.fillStyle = i % 2 ? "rgba(255,255,255,0.012)" : "rgba(255,120,60,0.028)";
     ctx.fillRect(-W * 1.2, i * 92, W * 2.4, 46);
   }
   ctx.restore();
+  /* ember glows in the corners, fight-poster style */
+  for (const [ex, ey] of [[60, H - 90], [W - 70, 130], [W - 120, H - 60]]) {
+    g = ctx.createRadialGradient(ex, ey, 10, ex, ey, 260);
+    g.addColorStop(0, "rgba(255,120,28,0.16)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g; ctx.fillRect(ex - 260, ey - 260, 520, 520);
+  }
   /* faint giant outline echo of the rank behind everything */
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = 3;
-  ctx.font = "900 560px " + F; ctx.textAlign = "center";
+  ctx.font = "italic 900 560px " + F; ctx.textAlign = "center";
   ctx.strokeText(rankTxt, W / 2, 940);
   ctx.restore();
 
@@ -362,9 +372,11 @@ function drawShareCard() {
 
   /* --- header row: company left, LIVE pill right --- */
   ctx.textAlign = "left";
-  ctx.fillStyle = "#f2f5fa"; ctx.font = "800 38px " + F;
+  ctx.fillStyle = "#f5efec"; ctx.font = "italic 900 38px " + F;
   ctx.fillText(b.company.toUpperCase(), 70, 116);
-  ctx.fillStyle = hero; ctx.font = "800 24px " + F;
+  g = ctx.createLinearGradient(70, 130, 70, 162);
+  g.addColorStop(0, "#ffd98a"); g.addColorStop(1, "#ff9d2e");
+  ctx.fillStyle = g; ctx.font = "italic 800 24px " + F;
   ctx.fillText(spaced("LIVE SCORE CARD"), 70, 158);
   /* LIVE pill */
   ctx.fillStyle = "rgba(255,93,93,0.14)";
@@ -376,54 +388,76 @@ function drawShareCard() {
   ctx.font = "800 28px " + F; ctx.fillText("LIVE", W - 196, 119);
   ctx.textAlign = "center";
 
-  /* --- player tag: dark text on a big angled hero banner --- */
+  /* --- thin fire divider under the header --- */
+  g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, "rgba(224,36,46,0)"); g.addColorStop(0.5, hero); g.addColorStop(1, "rgba(224,36,46,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 196, W, 4);
+
+  /* --- player tag: white text on an angled red banner (gold for top 3) --- */
   const tagSize = fitFont(ctx, p.tag, 900, F, 100, W - 340);
   const bannerH = tagSize + 74, bannerY = 250, skew = 26;
   const bw = ctx.measureText(p.tag.toUpperCase()).width + 150;
   const bx = W / 2 - bw / 2;
   /* drop shadow band */
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
   banner(ctx, bx + 14, bannerY + 16, bw, bannerH, skew); ctx.fill();
   g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-  g.addColorStop(0, hero); g.addColorStop(1, isTop3 ? "#ffdf7e" : "#63a5f0");
+  if (isTop3) { g.addColorStop(0, "#b58a10"); g.addColorStop(0.5, GOLD); g.addColorStop(1, "#ffdf7e"); }
+  else { g.addColorStop(0, "#4a0a0d"); g.addColorStop(0.5, "#9c1219"); g.addColorStop(1, RED); }
   ctx.fillStyle = g;
   banner(ctx, bx, bannerY, bw, bannerH, skew); ctx.fill();
-  ctx.fillStyle = INK; ctx.font = "900 " + tagSize + "px " + F;
+  ctx.strokeStyle = isTop3 ? "rgba(255,240,200,0.5)" : "rgba(255,120,120,0.4)"; ctx.lineWidth = 2;
+  banner(ctx, bx, bannerY, bw, bannerH, skew); ctx.stroke();
+  ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "italic 900 " + tagSize + "px " + F;
   ctx.fillText(p.tag.toUpperCase(), W / 2, bannerY + bannerH / 2 + tagSize * 0.36);
 
-  /* --- rank hero --- */
-  ctx.fillStyle = "#9aa6ba"; ctx.font = "800 30px " + F;
+  /* --- rank hero: chrome / steel numeral --- */
+  ctx.fillStyle = "#b3a49e"; ctx.font = "800 30px " + F;
   ctx.fillText(spaced("CURRENT RANK"), W / 2, 505);
   const rankFont = rankTxt.length > 4 ? 240 : rankTxt.length > 3 ? 290 : 340;
   ctx.save();
-  ctx.shadowColor = isTop3 ? "rgba(245,197,66,0.55)" : "rgba(57,135,229,0.55)";
+  ctx.shadowColor = isTop3 ? "rgba(245,197,66,0.5)" : "rgba(224,36,46,0.5)";
   ctx.shadowBlur = 80;
   g = ctx.createLinearGradient(0, 540, 0, 870);
   if (isTop3) { g.addColorStop(0, "#fff3cf"); g.addColorStop(1, GOLD); }
-  else { g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#9cc4f5"); }
+  else { g.addColorStop(0, "#ffffff"); g.addColorStop(0.45, "#e8ecf2"); g.addColorStop(0.75, "#9aa3b2"); g.addColorStop(1, "#6f7887"); }
   ctx.fillStyle = g;
-  ctx.font = "900 " + rankFont + "px " + F;
+  ctx.font = "italic 900 " + rankFont + "px " + F;
   ctx.fillText(rankTxt, W / 2, 850);
   ctx.restore();
   if (isTop3) {
     ctx.font = "96px " + F;
     ctx.fillText(["🥇", "🥈", "🥉"][p.rank - 1], W / 2 + (rankTxt.length > 2 ? 270 : 215), 620);
   }
-  /* "of N players" pill */
-  ctx.font = "700 34px " + F;
+  /* "of N players" — solid white pill, dark text */
+  ctx.font = "italic 700 34px " + F;
   const ofTxt = "of " + count.toLocaleString() + " players";
   const ofW = ctx.measureText(ofTxt).width + 76;
-  ctx.fillStyle = "rgba(255,255,255,0.06)";
-  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 31); ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.14)"; ctx.lineWidth = 2;
-  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 31); ctx.stroke();
-  ctx.fillStyle = "#c6d2e4"; ctx.fillText(ofTxt, W / 2, 935);
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = "#f5efec";
+  roundRect(ctx, W / 2 - ofW / 2, 892, ofW, 62, 12); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = INK; ctx.fillText(ofTxt, W / 2, 935);
 
-  /* --- score strip: TOTAL big + game chips --- */
-  ctx.fillStyle = "#5d6a80"; ctx.font = "800 26px " + F;
-  ctx.fillText(spaced("TOTAL SCORE"), W / 2, 1032);
-  ctx.fillStyle = "#f2f5fa"; ctx.font = "900 96px " + F;
-  ctx.fillText(p.total.toLocaleString(), W / 2, 1128);
+  /* --- score strip: 🥊 TOTAL SCORE in fire gold, one measured centered row --- */
+  const totTxt = p.total.toLocaleString();
+  ctx.font = "italic 900 52px " + F;  const lblW = ctx.measureText("TOTAL SCORE").width;
+  ctx.font = "italic 900 96px " + F;  const totW = ctx.measureText(totTxt).width;
+  const gloveW = 96, gapA = 26, gapB = 34;
+  let sx = W / 2 - (gloveW + gapA + lblW + gapB + totW) / 2;
+  ctx.textAlign = "left";
+  ctx.font = "80px " + F;
+  ctx.fillText("🥊", sx, 1112);
+  sx += gloveW + gapA;
+  ctx.fillStyle = "#f5efec"; ctx.font = "italic 900 52px " + F;
+  ctx.fillText("TOTAL SCORE", sx, 1105);
+  sx += lblW + gapB;
+  g = ctx.createLinearGradient(0, 1030, 0, 1120);
+  g.addColorStop(0, "#ffe9ad"); g.addColorStop(1, "#f0a32c");
+  ctx.fillStyle = g; ctx.font = "italic 900 96px " + F;
+  ctx.fillText(totTxt, sx, 1118);
+  ctx.textAlign = "center";
   const parts = [];
   if (p.punch) parts.push("🥊 PUNCH " + p.punch.toLocaleString());
   if (p.scream) parts.push("📣 SCREAM +" + p.scream.toLocaleString());
@@ -434,7 +468,7 @@ function drawShareCard() {
       const cw = ctx.measureText(t).width + 56;
       ctx.fillStyle = "rgba(255,255,255,0.06)";
       roundRect(ctx, x - cw / 2, 1152, cw, 56, 28); ctx.fill();
-      ctx.fillStyle = "#9aa6ba"; ctx.fillText(t, x, 1191);
+      ctx.fillStyle = "#b3a49e"; ctx.fillText(t, x, 1191);
       x += 380;
     }
   }
@@ -446,7 +480,7 @@ function drawShareCard() {
   g = ctx.createLinearGradient(0, 0, W, 0);
   g.addColorStop(0, heroDark); g.addColorStop(1, hero);
   ctx.fillStyle = g; ctx.fill();
-  ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "900 44px " + F;
+  ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "italic 900 44px " + F;
   ctx.fillText((b.hashtag ? b.hashtag + "  ·  " : "") + "COME BEAT ME 🔥", W / 2, 1318);
 }
 function banner(ctx, x, y, w, h, skew) {

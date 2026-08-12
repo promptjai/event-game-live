@@ -6,26 +6,26 @@
 <title>Event Scoreboard</title>
 <style>
   /* ============================================================
-     BROADCAST SCOREBOARD — v4 redesign
-     Violet/teal arena look, glass panels, score-progress bars,
-     TOP 40 leaderboard with auto-rotating pages (1–20 / 21–40)
+     BROADCAST SCOREBOARD — v5 "fight night" redesign
+     Charcoal-black arena, fire-red + gold accents, chrome rank
+     numbers, score-progress bars, TOP 40 auto-rotating pages
      Design tokens
      ============================================================ */
   :root {
     color-scheme: dark;
-    --bg:            #06080f;
-    --panel:         rgba(15, 19, 32, 0.78);
-    --panel-solid:   #0f1320;
+    --bg:            #0b0606;
+    --panel:         rgba(24, 13, 12, 0.78);
+    --panel-solid:   #170d0c;
     --hairline:      rgba(255, 255, 255, 0.07);
     --hairline-2:    rgba(255, 255, 255, 0.14);
-    --ink:           #eef1f8;
-    --ink-2:         #98a2b8;
-    --ink-3:         #5a6478;
-    --accent:        #8b5cf6;              /* violet */
-    --accent-2:      #2dd4bf;              /* teal   */
-    --accent-soft:   rgba(139, 92, 246, 0.16);
-    --accent-glow:   rgba(139, 92, 246, 0.45);
-    --teal-soft:     rgba(45, 212, 191, 0.14);
+    --ink:           #f5efec;
+    --ink-2:         #b3a49e;
+    --ink-3:         #776761;
+    --accent:        #e0242e;              /* fight red   */
+    --accent-2:      #ff9d2e;              /* fire orange */
+    --accent-soft:   rgba(224, 36, 46, 0.16);
+    --accent-glow:   rgba(224, 36, 46, 0.5);
+    --fire-soft:     rgba(255, 157, 46, 0.14);
     --gold:          #f5c542;
     --gold-soft:     rgba(245, 197, 66, 0.14);
     --silver:        #c0c8d4;
@@ -38,21 +38,23 @@
   body {
     font-family: var(--font);
     background:
-      radial-gradient(1100px 560px at 85% -12%, rgba(139,92,246,0.16), transparent 60%),
-      radial-gradient(900px 520px at 0% 115%, rgba(45,212,191,0.10), transparent 55%),
+      radial-gradient(1100px 560px at 85% -12%, rgba(224,36,46,0.18), transparent 60%),
+      radial-gradient(900px 520px at 0% 115%, rgba(255,122,28,0.10), transparent 55%),
+      radial-gradient(700px 380px at 50% 118%, rgba(224,36,46,0.10), transparent 60%),
       var(--bg);
     color: var(--ink);
     overflow: hidden;
   }
-  /* faint arena grid behind everything */
+  /* smoky diagonal streaks behind everything, fight-poster style */
   body::before {
-    content: ""; position: fixed; inset: 0; pointer-events: none;
-    background:
-      linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
-    background-size: 44px 44px;
-    mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 80%);
+    content: ""; position: fixed; inset: -20%; pointer-events: none;
+    background: repeating-linear-gradient(
+      -24deg,
+      rgba(255,255,255,0.028) 0 42px,
+      rgba(255,255,255,0.008) 42px 84px
+    );
+    mask-image: radial-gradient(ellipse at 50% 40%, black 25%, transparent 78%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 40%, black 25%, transparent 78%);
   }
   @keyframes sheen { 0% { transform: translateX(-120%) skewX(-20deg); } 100% { transform: translateX(340%) skewX(-20deg); } }
   @keyframes pulse-dot { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .45; transform: scale(.8);} }
@@ -66,7 +68,7 @@
   header {
     position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    background: linear-gradient(100deg, var(--panel-solid) 0%, #141031 55%, #0d2430 100%);
+    background: linear-gradient(100deg, var(--panel-solid) 0%, #33100f 55%, #47130f 100%);
     border: 1px solid var(--hairline-2);
     border-radius: 16px;
     padding: clamp(10px, 1.8vh, 18px) clamp(14px, 2vw, 26px);
@@ -83,10 +85,11 @@
   }
   .brand { min-width: 0; }
   .brand h1 {
-    font-size: clamp(22px, 3.8vh, 38px); font-weight: 900; letter-spacing: 0.05em;
+    font-size: clamp(22px, 3.8vh, 38px); font-weight: 900; font-style: italic; letter-spacing: 0.05em;
     text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    background: linear-gradient(90deg, #ffffff 10%, #c9b8ff 55%, #8fe8dc 100%);
+    background: linear-gradient(180deg, #fff7e0 15%, #ffd98a 55%, #ff9d2e 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(224,36,46,0.35));
   }
   .brand p { color: var(--ink-2); font-size: clamp(11px, 1.7vh, 16px); letter-spacing: 0.04em; margin-top: 2px; }
   .head-right { display: flex; align-items: center; gap: clamp(10px, 1.4vw, 22px); flex-shrink: 0; }
@@ -166,7 +169,7 @@
     color: var(--ink-3); font-size: clamp(9px, 1.3vh, 11px); font-weight: 800; letter-spacing: 0.08em;
     transition: all .3s ease;
   }
-  .pgdot.on { color: #ddd2ff; border-color: rgba(139,92,246,0.55); background: var(--accent-soft); }
+  .pgdot.on { color: #ffd6ce; border-color: rgba(224,36,46,0.6); background: var(--accent-soft); }
   .board-cols.flip { animation: page-in .5s ease both; }
   @keyframes page-in { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
   .lb-body { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; min-height: 0; padding: clamp(4px, 0.8vh, 8px) 0; }
@@ -215,12 +218,12 @@
   .handle .ic {
     width: clamp(20px, 3vh, 26px); height: clamp(20px, 3vh, 26px); border-radius: 7px;
     display: inline-flex; align-items: center; justify-content: center;
-    background: var(--accent-soft); color: #ddd2ff; font-size: clamp(10px, 1.5vh, 12px); font-weight: 800;
-    border: 1px solid rgba(139,92,246,0.4);
+    background: var(--accent-soft); color: #ffd6ce; font-size: clamp(10px, 1.5vh, 12px); font-weight: 800;
+    border: 1px solid rgba(224,36,46,0.45);
   }
   .hashtag {
-    font-size: clamp(14px, 2.6vh, 24px); font-weight: 900; letter-spacing: 0.03em;
-    background: linear-gradient(90deg, #b79bff, #8fe8dc);
+    font-size: clamp(14px, 2.6vh, 24px); font-weight: 900; font-style: italic; letter-spacing: 0.03em;
+    background: linear-gradient(90deg, #ffd98a, #ff7a3c);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     white-space: nowrap;
   }
@@ -229,13 +232,13 @@
   /* waiting / error state */
   .overlay {
     position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-    background: rgba(6, 8, 15, 0.9); z-index: 50; text-align: center;
+    background: rgba(11, 6, 6, 0.9); z-index: 50; text-align: center;
   }
   .overlay.show { display: flex; }
   .overlay .box { max-width: 520px; padding: 32px; }
   .overlay h2 { font-size: 22px; letter-spacing: 0.2em; margin-bottom: 12px; color: var(--ink-2); }
   .overlay p { color: var(--ink-3); line-height: 1.6; font-size: 14px; }
-  .overlay code { color: #c4b0f7; }
+  .overlay code { color: #ffb0a6; }
   .spin {
     width: 34px; height: 34px; margin: 0 auto 18px; border-radius: 50%;
     border: 3px solid var(--hairline-2); border-top-color: var(--accent);
