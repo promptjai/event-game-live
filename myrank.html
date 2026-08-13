@@ -348,7 +348,7 @@ function loadTemplate(src) {
 }
 
 async function drawShareCard() {
-  const { p, count } = current;
+  const { p, count, leader, cutoff } = current;
   const b = brand;
   const cv = $("shareCanvas"), ctx = cv.getContext("2d");
   const W = cv.width, H = cv.height;
@@ -364,42 +364,53 @@ async function drawShareCard() {
   ctx.drawImage(img, 0, 0, W, H);
   ctx.textAlign = "center";
 
-  /* --- name plate: dark banner with red-hot edges --- */
+  /* --- name plate: dark banner with red-hot edges (gold-hot for top 3) --- */
   const tagSize = fitFont(ctx, p.tag, "italic 900", F, 92, W - 440);
   const plateW = Math.max(600, ctx.measureText(p.tag.toUpperCase()).width + 170);
-  const plateH = tagSize + 62, plateY = 398, skew = 14;
+  const plateH = tagSize + 62, plateY = 382, skew = 14;
   const px = W / 2 - plateW / 2;
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   banner(ctx, px + 10, plateY + 12, plateW, plateH, skew); ctx.fill();
   let g = ctx.createLinearGradient(px, 0, px + plateW, 0);
-  g.addColorStop(0, "#9b1220"); g.addColorStop(0.28, "#241518");
-  g.addColorStop(0.72, "#241518"); g.addColorStop(1, "#9b1220");
+  if (isTop3) {
+    g.addColorStop(0, "#b9871a"); g.addColorStop(0.28, "#241518");
+    g.addColorStop(0.72, "#241518"); g.addColorStop(1, "#b9871a");
+  } else {
+    g.addColorStop(0, "#9b1220"); g.addColorStop(0.28, "#241518");
+    g.addColorStop(0.72, "#241518"); g.addColorStop(1, "#9b1220");
+  }
   ctx.fillStyle = g;
   banner(ctx, px, plateY, plateW, plateH, skew); ctx.fill();
+  ctx.strokeStyle = isTop3 ? "rgba(245,197,66,0.55)" : "rgba(224,36,46,0.45)"; ctx.lineWidth = 2;
+  banner(ctx, px, plateY, plateW, plateH, skew); ctx.stroke();
   ctx.fillStyle = "#ffffff"; ctx.font = "italic 900 " + tagSize + "px " + F;
   ctx.fillText(p.tag.toUpperCase(), W / 2, plateY + plateH / 2 + tagSize * 0.35);
 
   /* --- CURRENT RANK label --- */
   ctx.fillStyle = "#b7bcc7"; ctx.font = "800 34px " + F;
-  ctx.fillText(spaced("CURRENT RANK"), W / 2, 592);
+  ctx.fillText(spaced("CURRENT RANK"), W / 2, 566);
 
-  /* --- giant metallic rank (silver; gold for top 3) --- */
-  const rankFont = rankTxt.length > 4 ? 230 : rankTxt.length > 3 ? 280 : 330;
-  const rankBase = 845;
+  /* --- giant metallic rank (silver; gold for top 3) with hot glow --- */
+  const rankFont = rankTxt.length > 4 ? 220 : rankTxt.length > 3 ? 265 : 310;
+  const rankBase = 800;
   ctx.font = "italic 900 " + rankFont + "px " + F;
   ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.fillText(rankTxt, W / 2 + 7, rankBase + 9);
+  ctx.save();
+  ctx.shadowColor = isTop3 ? "rgba(245,197,66,0.55)" : "rgba(224,36,46,0.55)";
+  ctx.shadowBlur = 90;
   g = ctx.createLinearGradient(0, rankBase - rankFont * 0.78, 0, rankBase);
   if (isTop3) { g.addColorStop(0, "#fff3cf"); g.addColorStop(0.55, "#f5c542"); g.addColorStop(1, "#b9871a"); }
   else { g.addColorStop(0, "#ffffff"); g.addColorStop(0.55, "#ccd3dd"); g.addColorStop(1, "#828d9e"); }
   ctx.fillStyle = g;
   ctx.fillText(rankTxt, W / 2, rankBase);
+  ctx.restore();
 
   /* --- "of N players" chip --- */
   ctx.font = "italic 700 38px " + F;
   const ofTxt = "of " + count.toLocaleString() + " players";
   const ofW = ctx.measureText(ofTxt).width + 90;
-  const ofY = 890;
+  const ofY = 838;
   ctx.fillStyle = "rgba(0,0,0,0.55)";
   banner(ctx, W / 2 - ofW / 2 + 7, ofY + 8, ofW, 64, 11); ctx.fill();
   ctx.fillStyle = "#26262c";
@@ -407,25 +418,65 @@ async function drawShareCard() {
   ctx.fillStyle = "#f2f2f5";
   ctx.fillText(ofTxt, W / 2, ofY + 45);
 
+  /* --- status ribbon: champion / big-screen / points-to-Top-N hook --- */
+  let status, statusGold;
+  if (p.total === 0) { status = "🥊 STEPPING INTO THE RING"; statusGold = false; }
+  else if (p.rank === 1) { status = "👑 CHAMPION — COME TAKE THE BELT"; statusGold = true; }
+  else if (p.rank <= 3) { status = "🔥 PODIUM FINISH — " + (leader - p.total).toLocaleString() + " PTS BEHIND THE CHAMP"; statusGold = true; }
+  else if (p.rank <= TOP_N) { status = "🔥 TOP " + TOP_N + " — ON THE BIG SCREEN"; statusGold = true; }
+  else { status = "🥊 " + Math.max(0, cutoff - p.total + 1).toLocaleString() + " PTS TO CRACK THE TOP " + TOP_N; statusGold = false; }
+  ctx.font = "italic 800 33px " + F;
+  const stW = ctx.measureText(status).width + 88;
+  const stY = 924;
+  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  banner(ctx, W / 2 - stW / 2 + 6, stY + 7, stW, 58, 10); ctx.fill();
+  g = ctx.createLinearGradient(W / 2 - stW / 2, 0, W / 2 + stW / 2, 0);
+  if (statusGold) { g.addColorStop(0, "#8a6a14"); g.addColorStop(0.5, "#f5c542"); g.addColorStop(1, "#8a6a14"); }
+  else { g.addColorStop(0, "#5c0d12"); g.addColorStop(0.5, "#b3161f"); g.addColorStop(1, "#5c0d12"); }
+  ctx.fillStyle = g;
+  banner(ctx, W / 2 - stW / 2, stY, stW, 58, 10); ctx.fill();
+  ctx.fillStyle = statusGold ? "#1d1204" : "#ffffff";
+  ctx.fillText(status, W / 2, stY + 41);
+
   /* --- TOTAL SCORE line: 🥊 TOTAL SCORE <gold number> --- */
   const scoreTxt = p.total.toLocaleString();
-  ctx.font = "italic 900 108px " + F;
+  ctx.font = "italic 900 104px " + F;
   const scoreW = ctx.measureText(scoreTxt).width;
   ctx.font = "italic 900 46px " + F;
   const lblW = ctx.measureText("TOTAL SCORE").width;
   const gap = 36, gloveW = 78;
   let x = W / 2 - (gloveW + gap + lblW + gap + scoreW) / 2;
-  const baseY = 1068;
+  const baseY = 1064;
   ctx.textAlign = "left";
   ctx.font = "66px " + F;
   ctx.fillText("🥊", x, baseY); x += gloveW + gap;
   ctx.fillStyle = "#ffffff"; ctx.font = "italic 900 46px " + F;
   ctx.fillText("TOTAL SCORE", x, baseY); x += lblW + gap;
-  g = ctx.createLinearGradient(0, baseY - 96, 0, baseY);
+  g = ctx.createLinearGradient(0, baseY - 92, 0, baseY);
   g.addColorStop(0, "#ffe9a8"); g.addColorStop(1, "#e2a42b");
-  ctx.fillStyle = g; ctx.font = "italic 900 108px " + F;
+  ctx.fillStyle = g; ctx.font = "italic 900 104px " + F;
   ctx.fillText(scoreTxt, x, baseY);
   ctx.textAlign = "center";
+
+  /* --- punch / scream breakdown chips --- */
+  const parts = [];
+  if (p.punch) parts.push("🥊 PUNCH " + p.punch.toLocaleString());
+  if (p.scream) parts.push("📣 SCREAM +" + p.scream.toLocaleString());
+  if (parts.length) {
+    ctx.font = "700 30px " + F;
+    const widths = parts.map(t => ctx.measureText(t).width + 56);
+    const chipGap = 20;
+    let cx = W / 2 - (widths.reduce((a, w) => a + w, 0) + chipGap * (parts.length - 1)) / 2;
+    for (let i = 0; i < parts.length; i++) {
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      roundRect(ctx, cx, 1092, widths[i], 54, 27); ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.22)"; ctx.lineWidth = 2;
+      roundRect(ctx, cx, 1092, widths[i], 54, 27); ctx.stroke();
+      ctx.fillStyle = "#e8ddd8";
+      ctx.fillText(parts[i], cx + widths[i] / 2, 1130);
+      cx += widths[i] + chipGap;
+    }
+  }
 }
 
 /* Fully canvas-drawn card for when the template JPG isn't available —
@@ -577,8 +628,14 @@ function drawFallbackCard(ctx, W, H, b, p, count, isTop3, rankTxt) {
   g = ctx.createLinearGradient(0, 0, W, 0);
   g.addColorStop(0, heroDark); g.addColorStop(1, hero);
   ctx.fillStyle = g; ctx.fill();
-  ctx.fillStyle = isTop3 ? INK : "#ffffff"; ctx.font = "italic 900 44px " + F;
-  ctx.fillText((b.hashtag ? b.hashtag + "  ·  " : "") + "COME BEAT ME 🔥", W / 2, 1318);
+  const bandTxt = (b.hashtag ? b.hashtag + "  ·  " : "") + "COME BEAT ME 🔥";
+  ctx.font = "italic 900 44px " + F;
+  let bandSize = 44;
+  while (ctx.measureText(bandTxt).width > W - 60 && bandSize > 24) {
+    bandSize -= 2; ctx.font = "italic 900 " + bandSize + "px " + F;
+  }
+  ctx.fillStyle = isTop3 ? INK : "#ffffff";
+  ctx.fillText(bandTxt, W / 2, 1318 - (44 - bandSize) / 2);
 }
 function banner(ctx, x, y, w, h, skew) {
   ctx.beginPath();
