@@ -254,6 +254,38 @@
   }
   .demo-badge.show { display: block; }
 
+  /* ---------------- portrait signage layout (vertical screens, e.g. 1080x1920) ----------------
+     Leaderboard becomes one tall column (both halves stack: 1-10 then 11-20),
+     QR panels sit side by side beneath it, type scales up for distance viewing */
+  @media (orientation: portrait) and (min-width: 821px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+    .board { order: -1; }
+    .left { flex-direction: row; }
+    .qrpanel { flex: 1; flex-direction: column; justify-content: center; text-align: center; gap: clamp(8px, 1vh, 14px); padding: clamp(12px, 1.4vh, 20px); }
+    .qrbox { width: clamp(110px, 11vh, 200px); }
+    .qrtext .t1 { font-size: clamp(14px, 1.4vh, 22px); }
+    .qrtext .t2 { font-size: clamp(10px, 1vh, 14px); }
+    .board-cols { grid-template-columns: 1fr; }
+    .lb-col + .lb-col { border-left: none; padding-left: 0; }
+    .lb-col + .lb-col .lb-head { display: none; }
+    .lb-row { max-height: 78px; }
+    .lb-head, .lb-row { grid-template-columns: clamp(48px, 6vw, 76px) 1fr clamp(96px, 15vw, 170px); }
+    .rank { font-size: clamp(14px, 1.5vh, 22px); }
+    .rank .num { min-width: clamp(28px, 2.2vh, 44px); height: clamp(28px, 2.2vh, 44px); }
+    .rank .medal { font-size: clamp(16px, 1.8vh, 30px); }
+    .pname { font-size: clamp(15px, 1.7vh, 28px); }
+    .score { font-size: clamp(16px, 1.8vh, 30px); }
+    .panel-title { font-size: clamp(12px, 1.2vh, 18px); }
+    .brand h1 { font-size: clamp(24px, 2.4vh, 48px); }
+    .brand p { font-size: clamp(12px, 1.2vh, 18px); }
+    .clock { font-size: clamp(18px, 2vh, 34px); }
+    .daychip .val { font-size: clamp(15px, 1.6vh, 26px); }
+    header { flex-wrap: wrap; }
+    footer { flex-wrap: wrap; justify-content: center; row-gap: 6px; }
+    .hashtag { font-size: clamp(14px, 1.8vh, 28px); }
+    .share-cta { text-align: center; }
+  }
+
   /* ---------------- phone layout ---------------- */
   @media (max-width: 820px) {
     body { overflow: auto; }
