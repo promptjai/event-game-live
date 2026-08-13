@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scoreboard TV — Punch Fighter</title>
+<link rel="stylesheet" href="fonts/kanit.css">
+<style>
+  /* ============================================================
+     TV SCOREBOARD — designed-template edition
+     The whole screen is one 1920x1080 artwork supplied by the
+     designer (tv-template.png / .jpg dropped next to this file).
+     This page only draws the live TOP 40 into the empty area,
+     rotating pages: ranks 1–20 <-> 21–40.
+
+     Tune the board position to your template with the four
+     --board-* variables below (pixels on the 1920x1080 canvas).
+     ============================================================ */
+  :root {
+    /* leaderboard area on the 1920x1080 template */
+    --board-x: 620px;      /* distance from left edge  */
+    --board-y: 268px;      /* distance from top edge   */
+    --board-w: 1235px;     /* area width               */
+    --board-h: 715px;      /* area height              */
+    --col-gap: 48px;       /* gap between the two columns of 10 */
+
+    --ink:    #f7f2ee;
+    --ink-2:  #c9bab2;
+    --ink-3:  #8a7a72;
+    --gold:   #f5c542;
+    --accent: #e0242e;
+    --accent-2: #ff9d2e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  body { font-family: 'Kanit', system-ui, "Segoe UI", "Noto Sans Thai", sans-serif; color: var(--ink); }
+
+  /* ---------- fixed 1920x1080 stage, scaled to fit the screen ---------- */
+  #stage {
+    position: absolute; left: 50%; top: 50%;
+    width: 1920px; height: 1080px;
+    transform-origin: center center;   /* scale set from JS */
+  }
+  #tpl {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; z-index: 0;
+  }
+
+  /* ---------- leaderboard ---------- */
+  #board {
+    position: absolute; z-index: 1;
+    left: var(--board-x); top: var(--board-y);
+    width: var(--board-w); height: var(--board-h);
+    display: grid; grid-template-columns: 1fr 1fr;
+    column-gap: var(--col-gap);
+  }
+  #board.flip { animation: page-in .5s ease both; }
+  @keyframes page-in { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+  @keyframes row-in  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes flash-up   { 0% { background: rgba(46,194,126,0.30); } 100% { background: transparent; } }
+  @keyframes flash-gold { 0% { box-shadow: inset 0 0 0 3px var(--gold), 0 0 40px rgba(245,197,66,.5); }
+                          100% { box-shadow: inset 0 0 0 2px rgba(245,197,66,.65), 0 0 22px rgba(245,197,66,.15); } }
+
+  .col { display: flex; flex-direction: column; min-height: 0; }
+  .col-head {
+    display: grid; grid-template-columns: 84px 1fr 190px; align-items: center; gap: 14px;
+    padding: 0 18px 12px;
+    font-size: 17px; font-weight: 700; letter-spacing: 0.38em; color: var(--ink-3);
+    text-transform: uppercase;
+  }
+  .col-head .r { text-align: right; }
+  .col-body { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; min-height: 0; }
+
+  .row {
+    position: relative; flex: 1; max-height: 66px;
+    display: grid; grid-template-columns: 84px 1fr 190px; align-items: center; gap: 14px;
+    padding: 0 18px; margin: 2px 0; border-radius: 12px;
+    animation: row-in .4s ease both;
+  }
+  /* gold hairline under every row, like the template mock */
+  .row::after {
+    content: ""; position: absolute; left: 16px; right: 16px; bottom: 0; height: 2px;
+    background: linear-gradient(90deg, rgba(245,197,66,0.65), rgba(224,36,46,0.35) 70%, transparent);
+    border-radius: 1px;
+  }
+  .row.up { animation: flash-up 1.6s ease-out; }
+  .row.champ {
+    background: linear-gradient(90deg, rgba(245,197,66,0.14), rgba(245,197,66,0.03) 70%, transparent);
+    box-shadow: inset 0 0 0 2px rgba(245,197,66,0.65), 0 0 22px rgba(245,197,66,0.15);
+  }
+  .row.champ.newchamp { animation: flash-gold 1.8s ease-out; }
+  .row.champ::after { background: linear-gradient(90deg, var(--gold), rgba(245,197,66,0.25)); height: 3px; }
+
+  .rk { display: flex; align-items: center; justify-content: center; }
+  .rk .num {
+    min-width: 44px; height: 44px; padding: 0 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: var(--ink-2); font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+  }
+  .rk .medal { font-size: 32px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+
+  .nm {
+    font-size: 27px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  }
+  .nm .delta { margin-left: 10px; font-size: 15px; font-weight: 800; color: #2ec27e; letter-spacing: 0.04em; }
+  .row.champ .nm { color: #fff3d6; }
+  .empty { color: var(--ink-3); font-size: 19px; font-weight: 400; font-style: italic; letter-spacing: 0.03em; text-transform: none; }
+
+  .sc {
+    text-align: right; font-size: 29px; font-weight: 800; font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  }
+  .row.champ .sc { color: var(--gold); }
+
+  /* ---------- page indicator (bottom-right of the board area) ---------- */
+  #pages {
+    position: absolute; z-index: 1;
+    left: var(--board-x); width: var(--board-w);
+    top: calc(var(--board-y) + var(--board-h) + 8px);
+    display: flex; justify-content: flex-start; gap: 10px;
+  }
+  .pgdot {
+    padding: 4px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18);
+    color: var(--ink-3); font-size: 15px; font-weight: 700; letter-spacing: 0.12em;
+    background: rgba(0,0,0,0.35); transition: all .3s ease;
+  }
+  .pgdot.on { color: #ffd6ce; border-color: rgba(224,36,46,0.7); background: rgba(224,36,46,0.22); }
+
+  /* ---------- waiting / error overlay ---------- */
+  #overlay {
+    position: absolute; inset: 0; z-index: 5; display: none;
+    align-items: center; justify-content: center; text-align: center;
+    background: rgba(5, 2, 2, 0.88);
+  }
+  #overlay.show { display: flex; }
+  #overlay h2 { font-size: 30px; letter-spacing: 0.3em; color: var(--ink-2); margin-bottom: 14px; }
+  #overlay p { color: var(--ink-3); font-size: 18px; line-height: 1.6; max-width: 640px; }
+  #overlay code { color: #ffb0a6; }
+  .spin {
+    width: 44px; height: 44px; margin: 0 auto 22px; border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.14); border-top-color: var(--accent);
+    animation: rot 1s linear infinite;
+  }
+  @keyframes rot { to { transform: rotate(1turn); } }
+
+  #demoBadge {
+    position: absolute; top: 14px; right: 14px; z-index: 6; display: none;
+    font-size: 14px; font-weight: 800; letter-spacing: 0.24em; color: var(--gold);
+    border: 1px solid rgba(245,197,66,0.5); border-radius: 999px; padding: 6px 16px;
+    background: rgba(0,0,0,0.5);
+  }
+  #demoBadge.show { display: block; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <img id="tpl" alt="">
+  <div id="board">
+    <div class="col">
+      <div class="col-head"><div>Rank</div><div>Player</div><div class="r">Score</div></div>
+      <div class="col-body" id="colA"></div>
+    </div>
+    <div class="col">
+      <div class="col-head"><div>Rank</div><div>Player</div><div class="r">Score</div></div>
+      <div class="col-body" id="colB"></div>
+    </div>
+  </div>
+  <div id="pages"><span class="pgdot on" id="pg0">1–20</span><span class="pgdot" id="pg1">21–40</span></div>
+  <div id="overlay">
+    <div>
+      <div class="spin"></div>
+      <h2>WAITING FOR DATA</h2>
+      <p id="overlayMsg">Connecting to the scoreboard sheet…</p>
+    </div>
+  </div>
+  <div id="demoBadge">DEMO DATA</div>
+</div>
+
+<script>
+/* ==================================================================
+   CONFIG — same Google Sheet as scoreboard.html.
+   Override with scoreboard-tv.html?sheet=<SHEET_ID>.
+   Extra URL options:
+     ?demo        run with sample data (no sheet needed)
+     ?page=1      lock to ranks 1–20  (no rotation — e.g. TV #1)
+     ?page=2      lock to ranks 21–40 (no rotation — e.g. TV #2)
+   ================================================================== */
+const SHEET_ID  = "1MJp-Ns0SVVeZYVGFjdhScvjldC5tFVYJLAfM3W4185k";
+const POLL_MS   = 10000;
+const TOP_N     = 40;     /* total ranks across all pages  */
+const PAGE_SIZE = 20;     /* ranks per screen (2 cols x10) */
+const ROTATE_MS = 12000;  /* page flip: 1–20 <-> 21–40     */
+
+/* The designed 1920x1080 template artwork. Drop the exported file
+   next to this page as tv-template.png (or .jpg). Until then the
+   plain flame background (myrank-bg.jpeg) is used as a stand-in.
+   To use different artwork per page, also export tv-template-2.png
+   (or .jpg) — it will be shown while ranks 21–40 are on screen. */
+const TEMPLATE_SOURCES   = ["tv-template.png", "tv-template.jpg", "myrank-bg.jpeg"];
+const TEMPLATE_2_SOURCES = ["tv-template-2.png", "tv-template-2.jpg"];
+
+const QS  = new URLSearchParams(location.search);
+const SID = QS.get("sheet") || SHEET_ID;
+const urlFor = tab =>
+  "https://docs.google.com/spreadsheets/d/" + SID +
+  "/gviz/tq?tqx=out:csv&headers=0&sheet=" + tab + "&_=" + Date.now();
+
+/* Players tab column indexes (0-based) — same layout the other pages read */
+const PCOL = { ID: 0, TAG: 3, TOTAL: 16 };
+
+/* ---------------- scale the 1920x1080 stage to the screen ---------------- */
+function fit() {
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  document.getElementById("stage").style.transform =
+    "translate(-50%, -50%) scale(" + s + ")";
+}
+addEventListener("resize", fit); fit();
+
+/* ---------------- template image (with fallbacks) ---------------- */
+let tplMain = null, tplPage2 = null;
+function resolveImg(sources, done) {
+  (function tryNext(i) {
+    if (i >= sources.length) return done(null);
+    const img = new Image();
+    img.onload  = () => done(sources[i]);
+    img.onerror = () => tryNext(i + 1);
+    img.src = sources[i];
+  })(0);
+}
+resolveImg(TEMPLATE_SOURCES,   src => { tplMain  = src; applyTemplate(); });
+resolveImg(TEMPLATE_2_SOURCES, src => { tplPage2 = src; applyTemplate(); });
+function applyTemplate() {
+  const want = (page === 1 && tplPage2) ? tplPage2 : tplMain;
+  const el = document.getElementById("tpl");
+  if (want && el.getAttribute("src") !== want) el.src = want;
+}
+
+/* ---------------- CSV parsing (handles quoted fields) ---------------- */
+function parseCSV(text) {
+  const rows = []; let row = [], cur = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+      else cur += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === ',') { row.push(cur); cur = ""; }
+    else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ""; }
+    else if (ch !== '\r') cur += ch;
+  }
+  if (cur !== "" || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+function num(v) { return Number(String(v == null ? "" : v).replace(/[,\s]/g, "")) || 0; }
+
+/* Players tab -> ranked [{id,name,score}] (score desc; ties -> earlier row wins) */
+function parsePlayers(csvText) {
+  const players = [];
+  parseCSV(csvText).forEach((r, i) => {
+    if (i === 0) return;                     /* header row */
+    const name = (r[PCOL.TAG] || "").trim();
+    if (!name) return;
+    players.push({ id: (r[PCOL.ID] || "").trim(), name, score: num(r[PCOL.TOTAL]), row: i });
+  });
+  return players
+    .filter(p => p.score > 0)
+    .sort((a, b) => b.score - a.score || a.row - b.row);
+}
+
+/* ---------------- rendering ---------------- */
+const $ = id => document.getElementById(id);
+let lastTop = [];
+let havePrev = false;
+let prevRank = {};
+let prevChampKey = null;
+
+/* fixed page via ?page=1 / ?page=2, else auto-rotate */
+const LOCK_PAGE = QS.get("page") === "1" ? 0 : QS.get("page") === "2" ? 1 : null;
+let page = LOCK_PAGE == null ? 0 : LOCK_PAGE;
+
+function updateTop(top) {
+  top.forEach((p, i) => {
+    const was = prevRank[p.name];
+    p.up = havePrev && was !== undefined && was > i;
+    p.isNew = havePrev && was === undefined;
+    p.delta = p.up ? was - i : 0;
+  });
+  const champKey = top[0] ? top[0].name : null;
+  const newChamp = havePrev && champKey && prevChampKey && champKey !== prevChampKey;
+  prevRank = {};
+  top.forEach((p, i) => { prevRank[p.name] = i; });
+  prevChampKey = champKey;
+  const firstLoad = !havePrev;
+  havePrev = true;
+  lastTop = top;
+  renderBoard(false, firstLoad, newChamp);
+}
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+function renderBoard(flip, firstLoad, newChamp) {
+  $("pg0").className = "pgdot" + (page === 0 ? " on" : "");
+  $("pg1").className = "pgdot" + (page === 1 ? " on" : "");
+  $("pages").style.display = LOCK_PAGE == null ? "" : "none";
+  applyTemplate();
+  if (flip) {
+    const b = $("board");
+    b.classList.remove("flip"); void b.offsetWidth;
+    b.classList.add("flip");
+  }
+  const bodies = [$("colA"), $("colB")];
+  bodies.forEach(b => { b.innerHTML = ""; });
+  const start = page * PAGE_SIZE;
+  for (let k = 0; k < PAGE_SIZE; k++) {
+    const i = start + k;                     /* absolute rank index */
+    const body = bodies[k < PAGE_SIZE / 2 ? 0 : 1];
+    const row = document.createElement("div");
+    const p = lastTop[i];
+    row.className = "row" + (i === 0 ? " champ" : "");
+    if (!p) {
+      row.innerHTML = `<div class="rk"><span class="num">${i + 1}</span></div>
+        <div class="nm empty">— open slot, your name here —</div><div class="sc"></div>`;
+      body.appendChild(row); continue;
+    }
+    if (p.up || p.isNew) row.classList.add("up");
+    if (i === 0 && newChamp) row.classList.add("newchamp");
+    row.style.animationDelay = firstLoad ? (k * 0.04) + "s" : "0s";
+    const medal = i < 3 ? `<span class="medal">${MEDALS[i]}</span>` : `<span class="num">${i + 1}</span>`;
+    const delta = p.up ? `<span class="delta">▲${p.delta}</span>` : (p.isNew ? `<span class="delta">NEW</span>` : "");
+    row.innerHTML =
+      `<div class="rk">${medal}</div>
+       <div class="nm">${esc(p.name)}${delta}</div>
+       <div class="sc">${p.score.toLocaleString()}</div>`;
+    body.appendChild(row);
+  }
+}
+
+/* auto-rotate 1–20 <-> 21–40; stays on page 1 until anyone ranks 21+ */
+setInterval(() => {
+  if (LOCK_PAGE != null) return;
+  if (lastTop.length > PAGE_SIZE) { page = 1 - page; renderBoard(true, false, false); }
+  else if (page !== 0) { page = 0; renderBoard(true, false, false); }
+}, ROTATE_MS);
+
+/* ---------------- data loop ---------------- */
+let failures = 0;
+async function tick() {
+  try {
+    const res = await fetch(urlFor("Players"), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const top = parsePlayers(await res.text()).slice(0, TOP_N);
+    failures = 0;
+    $("overlay").classList.remove("show");
+    updateTop(top);
+  } catch (e) {
+    failures++;
+    if (!havePrev || failures >= 3) {
+      $("overlayMsg").innerHTML = "Can't reach the sheet (" + esc(e.message) + ").<br>Check the <code>SHEET_ID</code> at the top of this file and the sheet's sharing settings. Retrying…";
+      $("overlay").classList.add("show");
+    }
+  }
+}
+
+/* ---------------- demo mode (?demo) ---------------- */
+const DEMO = QS.has("demo");
+function demoData() {
+  const base = ["PLOY777","MINT.EXE","BEAMZILLA","FAHSTORM","NACKATTACK","JUNEBUG",
+    "OATMEAL","PRAEDATOR","ICEBERG","GIFTED","TONKLA","BOSSMODE","NAMWAN","KAOFANG",
+    "MEKZILLA","PANCAKE","TITAN_T","MILKYWAY","GOLFPRO","VIEWFINDER","SUNSHINE9",
+    "KRATAI","BIGBOSS","NOODLE_X","FERNFERN","TURBOMAX","MOJITO","SPICYMAMA",
+    "CAPTAINP","WAVERIDER","JELLYBEAN","NIGHTOWL","THUNDERB","COCOPUFF","DRAGONFLY",
+    "PEPPERONI","STARGAZER","BUBBLETEA","ROCKETMAN","LUCKYCAT7"];
+  return base.map((n, i) => ({ id: "P-" + String(i + 1).padStart(3, "0"), name: n,
+    score: 10500 - i * 210 - Math.floor(Math.random() * 120), row: i }));
+}
+let demoRows = [];
+function demoTick() {
+  if (!demoRows.length) demoRows = demoData();
+  updateTop(demoRows.slice().sort((a, b) => b.score - a.score || a.row - b.row).slice(0, TOP_N));
+  const i = 1 + Math.floor(Math.random() * (demoRows.length - 1));
+  demoRows[i].score += Math.floor(Math.random() * 900);
+}
+
+if (DEMO) {
+  $("demoBadge").classList.add("show");
+  demoTick();
+  setInterval(demoTick, 6000);
+} else {
+  tick();
+  setInterval(tick, POLL_MS);
+}
+</script>
+</body>
+</html>
