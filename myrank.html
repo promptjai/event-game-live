@@ -32,35 +32,71 @@
     padding-bottom: 48px;
   }
 
-  /* --- fire-frame hero: top strip of the share template (logos + flames) --- */
-  .hero {
-    width: 100%; aspect-ratio: 1080 / 322;
-    background: url("share-template.jpg") top center / 100% auto no-repeat;
-    position: relative;
+  /* --- 16:9 poster stage: the full-page template artwork is the background.
+     Export the "My rank design template" as  myrank-template.jpg  (1920x1080)
+     next to this page — the headline "ชวนคุณมาเช็กอันดับความตึง! RANKING" is
+     baked into that artwork, so on wide screens the HTML headline is hidden
+     and the search bar is positioned to the artwork's right of it.
+     If the file is missing, the gradient layers below stand in. --- */
+  .stage {
+    position: relative; width: 100%; min-height: 100vh;
+    background:
+      url("myrank-template.jpg") top center / cover no-repeat,
+      radial-gradient(70% 22% at 50% -4%, rgba(255,140,30,0.35), transparent 70%),
+      radial-gradient(90% 18% at 50% 104%, rgba(255,122,28,0.25), transparent 70%),
+      radial-gradient(900px 500px at 92% 12%, rgba(224,36,46,0.14), transparent 60%),
+      var(--bg);
+    display: flex; flex-direction: column; align-items: center; padding: 20px 16px 48px;
   }
-  .hero::after {              /* melt the strip's cut edge into the page bg */
-    content: ""; position: absolute; inset: auto 0 0 0; height: 12%;
-    background: linear-gradient(180deg, transparent, var(--bg));
+  .mhead { text-align: center; margin: 6px 0 16px; }
+  @media (max-width: 899px) {
+    /* portrait: the artwork's centered logo + fire crown the page; a scrim
+       hides its baked headline band (which sits behind our own headline) */
+    .stage::before {
+      content: ""; position: absolute; left: 0; right: 0; top: 23%; height: 22%;
+      background: linear-gradient(180deg, transparent, #070404 12%, #070404 88%, transparent);
+      pointer-events: none;
+    }
+    .mhead, .searchbox, .rankzone, .msg { position: relative; z-index: 1; }
+    .mhead { margin-top: 19vh; }
   }
-
-  .wrap { width: 100%; max-width: 940px; padding: 10px 16px 0; }
-
-  /* --- lead row: headline left, search panel right (stacks on mobile) --- */
-  .lead { display: grid; grid-template-columns: auto 1fr; gap: 10px 26px; align-items: center; margin: 8px 0 20px; }
-  header { text-align: right; }
-  header .l1 { font-size: 26px; font-weight: 800; line-height: 1.15; }
-  header .l2 {
-    font-size: 40px; font-weight: 900; font-style: italic; line-height: 1.1;
+  .mhead .l1 { font-size: 24px; font-weight: 800; line-height: 1.15; }
+  .mhead .l2 {
+    font-size: 38px; font-weight: 900; font-style: italic; line-height: 1.1;
     background: linear-gradient(180deg, #fff3cf 10%, var(--gold) 55%, #c8912a 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     filter: drop-shadow(0 2px 10px rgba(0,0,0,0.6));
   }
-  header .l3 { font-size: 15px; font-weight: 700; letter-spacing: 0.3em; color: #e9e2df; margin-top: 2px; }
-  @media (max-width: 719px) {
-    .lead { grid-template-columns: 1fr; }
-    header { text-align: center; }
-    header .l1 { font-size: 22px; }
-    header .l2 { font-size: 34px; }
+  .mhead .l3 { font-size: 14px; font-weight: 700; letter-spacing: 0.3em; color: #e9e2df; margin-top: 2px; }
+  .searchbox { width: 100%; max-width: 560px; }
+  .rankzone { width: 100%; display: flex; justify-content: center; margin-top: 16px; }
+
+  @media (min-width: 900px) {
+    /* poster mode: everything scales with the artwork (vw = stage-width %) */
+    .stage { display: block; aspect-ratio: 1920 / 1080; min-height: 0; padding: 0; }
+    .mhead { display: none; }                 /* headline lives in the artwork */
+    .searchbox { position: absolute; left: 45.5%; top: 26.5%; width: 37%; }
+    .rankzone { position: absolute; left: 0; right: 0; top: 47%; margin: 0; }
+    .panel { padding: 1.2vw; border-radius: 1vw; }
+    input[type=text] { font-size: 1.15vw; padding: 0.85vw 1vw; border-radius: 0.65vw; }
+    .searchrow button { font-size: 1.05vw; padding: 0.85vw 1.7vw; border-radius: 0.65vw; }
+    .hint { font-size: 0.8vw; margin-top: 0.7vw; }
+    .msg { font-size: 0.95vw; }
+    .card { max-width: 32vw; }
+    .card-body { padding: 0; }
+    .live { display: none; }                  /* not part of the poster design */
+    .tag { font-size: 2.1vw; padding: 0.5vw 2.4vw; }
+    .rankline { margin-top: 1vw; }
+    .rankline .lbl { font-size: 0.95vw; }
+    .bigrank { font-size: 7vw; }
+    .ofn { font-size: 1vw; padding: 0.35vw 1.4vw; }
+    .scoreline { margin-top: 1.1vw; gap: 0.7vw; }
+    .scoreline .glove { font-size: 1.7vw; }
+    .scoreline .slbl { font-size: 1.25vw; }
+    .scoreline .sval { font-size: 3vw; }
+    .card-actions { padding: 1.3vw 0 0; }
+    .card-actions button { font-size: 0.95vw; padding: 0.8vw 1.4vw; border-radius: 0.65vw; flex-basis: 15vw; }
+    .refreshed { font-size: 0.75vw; margin-top: 0.6vw; }
   }
 
   .panel {
@@ -89,15 +125,11 @@
   .msg.show { display: block; }
   .msg.err { color: #ff8d8d; }
 
-  /* ---------------- rank score card (matches the share-card design) ---------------- */
+  /* ---------------- ranking block: sits directly on the artwork's empty
+     middle — same elements as the share card's middle part, nothing else --- */
   .card {
-    display: none; margin: 4px auto 0; max-width: 430px; overflow: hidden; padding: 0;
-    position: relative; border-radius: 14px; border: 1px solid var(--hairline);
-    background:
-      radial-gradient(120% 90% at 50% 0%, rgba(224,36,46,0.10), transparent 55%),
-      radial-gradient(90% 60% at 85% 90%, rgba(255,122,28,0.07), transparent 60%),
-      linear-gradient(160deg, #1b1213 0%, #100b0b 45%, #150c0c 100%);
-    box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+    display: none; margin: 0 auto; max-width: 440px; padding: 0;
+    position: relative;
   }
   .card.show { display: block; animation: pop-in .45s cubic-bezier(.2,.9,.3,1.1); }
   @keyframes pop-in { from { opacity: 0; transform: scale(.94) translateY(12px);} to { opacity: 1; transform: none;} }
@@ -109,7 +141,7 @@
   .live i { width: 7px; height: 7px; border-radius: 50%; background: #ff5d5d; animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1;} 50% { opacity: .4;} }
 
-  .card-body { padding: 30px 18px 18px; text-align: center; }
+  .card-body { padding: 26px 18px 0; text-align: center; }
   /* name plate: angled banner, hot red edge fading to black (as in the mock) */
   .tag {
     display: inline-block; min-width: 62%; max-width: 100%; padding: 8px 34px;
@@ -147,37 +179,23 @@
     filter: drop-shadow(0 3px 1px rgba(0,0,0,0.5));
   }
 
-  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--hairline); border-top: 1px solid var(--hairline); margin-top: 18px; }
-  .cell { background: var(--panel-solid); padding: 12px 6px; text-align: center; }
-  .cell .v { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .cell .k { font-size: 9px; letter-spacing: 0.14em; color: var(--ink-3); font-weight: 700; margin-top: 2px; }
+  .card-actions { display: flex; gap: 10px; justify-content: center; padding: 20px 16px 0; }
+  .card-actions button { flex: 0 1 260px; }
+  button.ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--hairline-2); color: var(--ink-2); flex: 0 0 auto; }
 
-  .callout {
-    margin: 14px 16px 0; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.55;
-    background: var(--accent-soft); border: 1px solid rgba(224,36,46,0.4); color: #ffd6ce;
-  }
-  .callout.gold { background: var(--gold-soft); border-color: rgba(245,197,66,0.4); color: #ffe9a8; }
-
-  .card-actions { display: flex; gap: 10px; padding: 16px; }
-  .card-actions button { flex: 1; }
-  button.ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--hairline-2); color: var(--ink-2); }
-  .hashtag-foot { text-align: center; padding: 0 16px 16px; font-weight: 900; font-style: italic; font-size: 15px;
-    background: linear-gradient(90deg, #ffd98a, #ff7a3c); -webkit-background-clip: text; background-clip: text; color: transparent; }
-
-  .refreshed { text-align: center; color: var(--ink-3); font-size: 11px; margin-top: 12px; }
+  .refreshed { text-align: center; color: var(--ink-3); font-size: 11px; margin-top: 10px; }
   canvas { display: none; }
 </style>
 </head>
 <body>
-<div class="hero" aria-hidden="true"></div>
-<div class="wrap">
-  <div class="lead">
-    <header>
-      <div class="l1">ชวนคุณมาเช็กอันดับ</div>
-      <div class="l2">ความตึง!</div>
-      <div class="l3">RANKING</div>
-    </header>
+<div class="stage">
+  <header class="mhead">
+    <div class="l1">ชวนคุณมาเช็กอันดับ</div>
+    <div class="l2">ความตึง!</div>
+    <div class="l3">RANKING</div>
+  </header>
 
+  <div class="searchbox">
     <div class="panel">
       <div class="searchrow">
         <input type="text" id="tagInput" placeholder="เช่น / e.g. JACK" autocomplete="off" autocapitalize="characters" enterkeyhint="search">
@@ -185,38 +203,32 @@
       </div>
       <div class="hint">กรอกฉายานักสู้ที่ลงทะเบียนไว้ เพื่อเช็คอันดับความตึงแบบ Real-time พร้อมแชร์พลังความตึงของคุณลงโซเชียล<br>Enter the fighter name you registered to check your rank in real time — and share your power on social.</div>
     </div>
+    <div class="msg" id="msg"></div>
   </div>
 
-  <div class="msg" id="msg"></div>
-
-  <div class="card" id="card">
-    <div class="live"><i></i>LIVE</div>
-    <div class="card-body">
-      <div class="tag" id="cTag">—</div>
-      <div class="rankline">
-        <div class="lbl">CURRENT RANK</div>
-        <div><span class="bigrank" id="cRank">–</span></div>
-        <div class="ofn" id="cOf">of – players</div>
-      </div>
-      <div class="scoreline">
-        <span class="glove">🥊</span>
-        <span class="slbl">TOTAL SCORE</span>
-        <span class="sval" id="cScore">0</span>
-      </div>
-      <div class="split">
-        <div class="cell"><div class="v" id="cPunch">–</div><div class="k">PUNCH BEST</div></div>
-        <div class="cell"><div class="v" id="cScream">–</div><div class="k">SCREAM BONUS</div></div>
+  <div class="rankzone">
+    <div class="card" id="card">
+      <div class="live"><i></i>LIVE</div>
+      <div class="card-body">
+        <div class="tag" id="cTag">—</div>
+        <div class="rankline">
+          <div class="lbl">CURRENT RANK</div>
+          <div><span class="bigrank" id="cRank">–</span></div>
+          <div class="ofn" id="cOf">of – players</div>
+        </div>
+        <div class="scoreline">
+          <span class="glove">🥊</span>
+          <span class="slbl">TOTAL SCORE</span>
+          <span class="sval" id="cScore">0</span>
+        </div>
+        <div class="card-actions">
+          <button id="shareBtn">📣 แชร์อันดับของฉัน</button>
+          <button class="ghost" id="refreshBtn">↻</button>
+        </div>
+        <div class="refreshed" id="refreshed"></div>
       </div>
     </div>
-    <div class="callout" id="cCallout"></div>
-    <div class="card-actions">
-      <button id="shareBtn">📣 แชร์อันดับของฉัน</button>
-      <button class="ghost" id="refreshBtn">↻</button>
-    </div>
-    <div class="hashtag-foot" id="cHashtag"></div>
   </div>
-
-  <div class="refreshed" id="refreshed"></div>
 </div>
 
 <canvas id="shareCanvas" width="1080" height="1350"></canvas>
@@ -334,7 +346,7 @@ async function lookup(rawTag, silent) {
                 cutoff: players[TOP_N - 1] ? players[TOP_N - 1].total : 0,
                 leader: players[0] ? players[0].total : 0 };
     hideMsg();
-    renderCard(b);
+    renderCard();
     history.replaceState(null, "", "?tag=" + encodeURIComponent(p.tag) + (QS.get("sheet") ? "&sheet=" + SID : ""));
     clearInterval(timer);
     timer = setInterval(() => lookup(p.tag, true), AUTO_REFRESH_MS);
@@ -343,42 +355,14 @@ async function lookup(rawTag, silent) {
   }
 }
 
-function renderCard(b) {
-  const { p, count, cutoff } = current;
+function renderCard() {
+  const { p, count } = current;
   $("cTag").textContent = p.tag;
   const rankEl = $("cRank");
   rankEl.textContent = p.total > 0 ? "#" + p.rank : "—";
   rankEl.className = "bigrank" + (p.total > 0 && p.rank <= 3 ? " top3" : "");
   $("cOf").textContent = "of " + count.toLocaleString() + " players";
   $("cScore").textContent = p.total.toLocaleString();
-  $("cPunch").textContent = p.punch ? p.punch.toLocaleString() : "–";
-  $("cScream").textContent = p.scream ? "+" + p.scream.toLocaleString() : "–";
-
-  const co = $("cCallout");
-  const playsLeft = Math.max(0, p.playsEarned - p.playsUsed);
-  if (p.total === 0) {
-    co.className = "callout";
-    co.textContent = "ยังไม่มีคะแนน — ขึ้นสังเวียนแล้วปล่อยหมัดแรกเลย! 🥊 No score yet — step into the ring and throw your first punch!";
-  } else if (p.rank === 1) {
-    co.className = "callout gold";
-    co.textContent = "👑 ตัวตึงอันดับ 1! คุณคือแชมป์ — ป้องกันบัลลังก์ไว้ให้ได้ · You're the champ — defend that throne!";
-  } else if (p.rank <= TOP_N) {
-    co.className = "callout gold";
-    co.textContent = "🔥 ตัวตึงตัวจริง! คุณอยู่ใน TOP " + TOP_N + " บนจอใหญ่ — ห่างแชมป์อีก " +
-      (current.leader - p.total).toLocaleString() + " คะแนน · You're in the TOP " + TOP_N +
-      " on the big screen — " + (current.leader - p.total).toLocaleString() + " points behind the champ.";
-  } else {
-    const gap = Math.max(0, cutoff - p.total + 1);
-    co.className = "callout";
-    co.textContent = "อีก " + gap.toLocaleString() + " คะแนนจะติด TOP " + TOP_N + " — สู้ต่ออย่าถอย! 🥊" +
-      (playsLeft > 0 ? " คุณเหลือสิทธิ์ต่อยอีก " + playsLeft + " ครั้ง" : "") +
-      (!p.scream ? " หรือลองเกมตะโกนรับโบนัส 📣" : "") +
-      " · " + gap.toLocaleString() + " points to crack the TOP " + TOP_N + " — keep fighting!" +
-      (playsLeft > 0 ? " You still have " + playsLeft + " punch play(s) left!" : "") +
-      (!p.scream ? " Or try the scream game for a bonus!" : "");
-  }
-
-  $("cHashtag").textContent = b.hashtag;
   $("card").classList.add("show");
   $("refreshed").textContent = "อัปเดตล่าสุด / updated " + new Date().toLocaleTimeString();
 }
