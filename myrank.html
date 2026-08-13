@@ -46,7 +46,7 @@
   }
   /* the logo PNG has large transparent margins around the wordmark, so the
      negative margins pull the surrounding whitespace back in */
-  .logo { display: block; width: min(78vw, 360px); margin: -7vw auto -16vw; pointer-events: none; }
+  .logo { display: block; width: min(78vw, 360px); margin: 2vw auto -17vw; pointer-events: none; }
   .mhead { text-align: center; margin: 6px 0 16px; }
   .mhead .l1 { font-size: 24px; font-weight: 800; line-height: 1.15; }
   .mhead .l2 {
@@ -117,6 +117,9 @@
   .rankline { margin-top: 16px; }
   .rankline .lbl { font-size: 13px; font-weight: 800; letter-spacing: 0.3em; color: #cfd2d8; }
   .bigrank {
+    /* inline-block + padding: background-clip:text only paints inside the
+       box, so the italic overhang would get shaved off without it */
+    display: inline-block; padding: 0.06em 0.16em;
     font-size: 108px; font-weight: 900; font-style: italic; line-height: 1.02; font-variant-numeric: tabular-nums;
     background: linear-gradient(180deg, #fff6d8 8%, #ffe08a 38%, var(--gold) 62%, #b9871a 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -149,7 +152,8 @@
   @media (min-width: 900px) {
     /* poster mode: everything scales with the artwork (vw = stage-width %) */
     .stage { display: block; aspect-ratio: 1920 / 1080; min-height: 0; padding: 0; }
-    .logo { position: absolute; left: 50%; transform: translateX(-50%); width: 26vw; margin: 0; top: -5vw; }
+    /* wordmark centre sits on the artwork's red divider (~19.5% down) */
+    .logo { position: absolute; left: 50%; transform: translateX(-50%); width: 28vw; margin: 0; top: -2.9vw; }
     .mhead { position: absolute; right: 56.5%; top: 28%; margin: 0; text-align: right; }
     .mhead .l1 { font-size: 2vw; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.8); }
     .mhead .l2 { font-size: 3.1vw; }
