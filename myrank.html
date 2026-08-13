@@ -117,7 +117,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="hCompany"><span class="bar">เช็กอันดับพลัง</span></h1>
+    <h1 id="hCompany"><span class="bar">ชวนคุณมาเช็กลำดับความตึง</span></h1>
     <p>RANK ตัวตึง</p>
   </header>
 
@@ -287,7 +287,7 @@ async function lookup(rawTag, silent) {
 function renderCard(b) {
   const { p, count, cutoff } = current;
   $("cardCo").innerHTML = esc(b.company.toUpperCase()) + " <b>// LIVE RANK</b>";
-  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// เช็คอันดับพลัง</span>';
+  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">ชวนคุณมาเช็กลำดับความตึง</span>';
   $("cTag").textContent = p.tag;
   const rankEl = $("cRank");
   rankEl.textContent = p.total > 0 ? "#" + p.rank : "—";
@@ -700,7 +700,7 @@ $("shareBtn").addEventListener("click", share);
 $("refreshBtn").addEventListener("click", () => current && lookup(current.p.tag));
 
 fetchBrand().then(b => {
-  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">// เช็คอันดับพลัง</span>';
+  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">ชวนคุณมาเช็กลำดับความตึง</span>';
 }).catch(() => {});
 
 const initTag = QS.get("tag");
