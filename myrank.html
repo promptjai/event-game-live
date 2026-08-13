@@ -273,6 +273,31 @@ function parseCSV(text) {
 function num(v) { return Number(String(v == null ? "" : v).replace(/[,\s]/g, "")) || 0; }
 const $ = id => document.getElementById(id);
 
+/* Forgiving name key: the big screen shows the raw cell, but typed lookups
+   must survive invisible characters and Thai look-alike spellings —
+   เเ (two SARA E) vs แ (SARA AE), ํ+า vs ำ — plus spacing and case. */
+function normTag(s) {
+  return String(s == null ? "" : s)
+    .normalize("NFC")
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "") /* zero-width chars, NBSP */
+    .replace(/\u0E40\u0E40/g, "\u0E41")            /* เเ (two SARA E) -> แ */
+    .replace(/\u0E4D\u0E32/g, "\u0E33")            /* ํ + า -> ำ */
+    .replace(/\s+/g, "")                           /* ignore all spaces */
+    .toUpperCase();
+}
+function editDist(a, b) {                          /* small Levenshtein for suggestions */
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > 3) return 99;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++)
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+
 /* ---------------- data ---------------- */
 let brand = null;   /* {company, hashtag, ig, fb} */
 
@@ -330,16 +355,50 @@ function showMsg(text, isErr) {
 }
 function hideMsg() { $("msg").className = "msg"; }
 
+/* not-found + clickable "did you mean" suggestions */
+function showNotFound(q, near) {
+  const m = $("msg");
+  m.textContent = "";
+  m.className = "msg show err";
+  m.append('ไม่พบชื่อ "' + q + '" — เช็กตัวสะกด หรือถามสตาฟหน้าบูธ');
+  m.append(document.createElement("br"));
+  m.append('Name "' + q + '" not found — check the spelling, or ask our booth staff.');
+  if (near.length) {
+    m.append(document.createElement("br"));
+    m.append("ใกล้เคียง / did you mean: ");
+    near.forEach((tag, i) => {
+      if (i) m.append(" · ");
+      const a = document.createElement("a");
+      a.href = "#"; a.textContent = tag;
+      a.style.cssText = "color:var(--accent-2);font-weight:800;text-decoration:underline";
+      a.addEventListener("click", e => { e.preventDefault(); $("tagInput").value = tag; lookup(tag); });
+      m.append(a);
+    });
+  }
+}
+
 async function lookup(rawTag, silent) {
-  const q = (rawTag || "").trim().toUpperCase();
+  const raw = (rawTag || "").trim();
+  const q = normTag(raw);
   if (!q) return;
   if (!silent) { showMsg("กำลังค้นหา… / Looking you up…"); $("card").classList.remove("show"); }
   try {
     const [players, b] = await Promise.all([fetchPlayers(), fetchBrand()]);
-    const p = players.find(x => x.tag.toUpperCase() === q)
-           || players.find(x => x.id.toUpperCase() === q);   /* P-047 also works */
+    let p = players.find(x => normTag(x.tag) === q)
+         || players.find(x => normTag(x.id) === q);          /* P-047 also works */
     if (!p) {
-      showMsg('ไม่พบชื่อ "' + q + '" — เช็กตัวสะกด หรือถามสตาฟหน้าบูธ\nName "' + q + '" not found — check the spelling, or ask our booth staff.', true);
+      /* unique partial match still counts (e.g. typed half the name) */
+      const partial = q.length >= 3 ? players.filter(x => normTag(x.tag).includes(q)) : [];
+      if (partial.length === 1) p = partial[0];
+    }
+    if (!p) {
+      const near = players
+        .map(x => ({ x, d: editDist(normTag(x.tag), q) }))
+        .filter(o => o.d <= 2)
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 3)
+        .map(o => o.x.tag);
+      showNotFound(raw.toUpperCase(), near);
       return;
     }
     current = { p, count: players.length,
