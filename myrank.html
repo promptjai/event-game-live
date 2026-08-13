@@ -183,6 +183,41 @@
     .card-actions button.ghost { flex: 0 0 auto; }
     .refreshed { font-size: 0.7vw; margin-top: 0.55vw; }
   }
+  @media (max-width: 899px) {
+    /* portrait: one full screen, no scrolling — everything is sized in vh
+       so the whole flow (logo, headline, search, ranking) fits any phone */
+    body { padding-bottom: 0; }
+    .stage { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; padding: 0 16px; }
+    .logo { position: absolute; top: 2vh; left: 50%; transform: translateX(-50%); width: min(38vh, 90vw); margin: 0; }
+    .mhead { margin: 25.5vh 0 1vh; }
+    .mhead .l1 { font-size: 2.6vh; }
+    .mhead .l2 { font-size: 4vh; }
+    .mhead .l3 { font-size: 1.7vh; margin-top: 0.3vh; }
+    .searchbox { max-width: 480px; }
+    .panel { padding: 1.6vh; border-radius: 1.8vh; }
+    input[type=text] { font-size: 2vh; padding: 1.5vh 1.8vh; }
+    .searchrow button { font-size: 1.9vh; padding: 1.5vh 2.6vh; }
+    .hint { font-size: 1.4vh; margin-top: 1vh; }
+    .hint .en { display: none; }
+    .msg { font-size: 1.6vh; margin-top: 1vh; }
+    .rankzone { margin-top: 1.6vh; }
+    .card { max-width: 80vw; }
+    .card-body { padding: 0; }
+    .live { top: 0; right: 0; }
+    .tag { font-size: 3.2vh; padding: 0.8vh 4vh; }
+    .rankline { margin-top: 1vh; }
+    .rankline .lbl { font-size: 1.5vh; }
+    .bigrank { font-size: 9vh; }
+    .ofn { font-size: 1.6vh; padding: 0.5vh 2.2vh; }
+    .scoreline { margin-top: 1vh; gap: 1.2vh; }
+    .scoreline .glove { font-size: 2.6vh; }
+    .scoreline .slbl { font-size: 2vh; }
+    .scoreline .sval { font-size: 4.4vh; }
+    .card-actions { padding: 1.4vh 0 0; gap: 1.2vh; }
+    .card-actions button { font-size: 1.6vh; padding: 1.1vh 2vh; border-radius: 1.2vh; flex: 0 1 auto; }
+    .refreshed { font-size: 1.2vh; margin-top: 0.8vh; }
+  }
+
   canvas { display: none; }
 </style>
 </head>
