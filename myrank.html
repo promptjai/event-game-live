@@ -32,34 +32,22 @@
     padding-bottom: 48px;
   }
 
-  /* --- 16:9 poster stage: the full-page template artwork is the background.
-     Export the "My rank design template" as  myrank-template.jpg  (1920x1080)
-     next to this page — the headline "ชวนคุณมาเช็กอันดับความตึง! RANKING" is
-     baked into that artwork, so on wide screens the HTML headline is hidden
-     and the search bar is positioned to the artwork's right of it.
-     If the file is missing, the gradient layers below stand in. --- */
+  /* --- 16:9 poster stage: the uploaded background artwork (fire frame,
+     empty middle) fills the page; the logo PNG and the headline are
+     separate layers so they stay sharp at every screen size. --- */
   .stage {
     position: relative; width: 100%; min-height: 100vh;
     background:
-      url("myrank-template.jpg") top center / cover no-repeat,
+      url("myrank-bg.jpeg") top center / cover no-repeat,
       radial-gradient(70% 22% at 50% -4%, rgba(255,140,30,0.35), transparent 70%),
       radial-gradient(90% 18% at 50% 104%, rgba(255,122,28,0.25), transparent 70%),
-      radial-gradient(900px 500px at 92% 12%, rgba(224,36,46,0.14), transparent 60%),
       var(--bg);
-    display: flex; flex-direction: column; align-items: center; padding: 20px 16px 48px;
+    display: flex; flex-direction: column; align-items: center; padding: 0 16px 48px;
   }
+  /* the logo PNG has large transparent margins around the wordmark, so the
+     negative margins pull the surrounding whitespace back in */
+  .logo { display: block; width: min(78vw, 360px); margin: -7vw auto -16vw; pointer-events: none; }
   .mhead { text-align: center; margin: 6px 0 16px; }
-  @media (max-width: 899px) {
-    /* portrait: the artwork's centered logo + fire crown the page; a scrim
-       hides its baked headline band (which sits behind our own headline) */
-    .stage::before {
-      content: ""; position: absolute; left: 0; right: 0; top: 23%; height: 22%;
-      background: linear-gradient(180deg, transparent, #070404 12%, #070404 88%, transparent);
-      pointer-events: none;
-    }
-    .mhead, .searchbox, .rankzone, .msg { position: relative; z-index: 1; }
-    .mhead { margin-top: 19vh; }
-  }
   .mhead .l1 { font-size: 24px; font-weight: 800; line-height: 1.15; }
   .mhead .l2 {
     font-size: 38px; font-weight: 900; font-style: italic; line-height: 1.1;
@@ -74,7 +62,11 @@
   @media (min-width: 900px) {
     /* poster mode: everything scales with the artwork (vw = stage-width %) */
     .stage { display: block; aspect-ratio: 1920 / 1080; min-height: 0; padding: 0; }
-    .mhead { display: none; }                 /* headline lives in the artwork */
+    .logo { position: absolute; left: 50%; transform: translateX(-50%); width: 26vw; margin: 0; top: -6.5vw; }
+    .mhead { position: absolute; right: 56.5%; top: 25%; margin: 0; text-align: right; }
+    .mhead .l1 { font-size: 2vw; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.8); }
+    .mhead .l2 { font-size: 3.1vw; }
+    .mhead .l3 { font-size: 1.1vw; letter-spacing: 0.32em; }
     .searchbox { position: absolute; left: 45.5%; top: 26.5%; width: 37%; }
     .rankzone { position: absolute; left: 0; right: 0; top: 47%; margin: 0; }
     .panel { padding: 1.2vw; border-radius: 1vw; }
@@ -84,7 +76,7 @@
     .msg { font-size: 0.95vw; }
     .card { max-width: 32vw; }
     .card-body { padding: 0; }
-    .live { display: none; }                  /* not part of the poster design */
+    .card .live { display: none; }            /* not part of the poster design */
     .tag { font-size: 2.1vw; padding: 0.5vw 2.4vw; }
     .rankline { margin-top: 1vw; }
     .rankline .lbl { font-size: 0.95vw; }
@@ -189,6 +181,7 @@
 </head>
 <body>
 <div class="stage">
+  <img class="logo" src="myrank-logo.png" alt="ห้องเสียงเมลโลว์จูน">
   <header class="mhead">
     <div class="l1">ชวนคุณมาเช็กอันดับ</div>
     <div class="l2">ความตึง!</div>
