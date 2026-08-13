@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>เช็กอันดับพลัง — My Rank</title>
+<!-- Kanit self-hosted (subset from Google Fonts) so the page needs no
+     external font CDN at the venue -->
+<link href="fonts/kanit.css" rel="stylesheet">
 <style>
   /* Matches scoreboard.html "fight night" design tokens */
   :root {
@@ -14,7 +17,7 @@
     --accent: #e0242e; --accent-2: #ff9d2e;
     --accent-soft: rgba(224,36,46,0.16); --accent-glow: rgba(224,36,46,0.5);
     --gold: #f5c542; --gold-soft: rgba(245,197,66,0.14); --good: #2ec27e;
-    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
+    --font: "Kanit", system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -334,7 +337,18 @@ function esc(s) { const d = document.createElement("div"); d.textContent = s; re
      name plate · CURRENT RANK · giant metallic rank · of-N chip · TOTAL SCORE.
    If the template image can't load, a canvas-drawn approximation of the same
    design is used so sharing still works. */
-const CARD_FONT = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
+/* Kanit once loaded; system stack until then. Canvas quirk: with a fallback
+   list Chromium can skip the webfont entirely, so the card must use the bare
+   family name — emoji still fall through to the system emoji font per glyph. */
+let CARD_FONT = '"Segoe UI", "Noto Sans Thai", system-ui, sans-serif';
+async function ensureCardFonts() {
+  const variants = ["italic 900 10px", "italic 800 10px", "italic 700 10px",
+                    "900 10px", "800 10px", "700 10px", "400 10px"];
+  try {
+    await Promise.all(variants.map(v => document.fonts.load(v + " Kanit", "แรงค์ RANK 0123 #")));
+    if (document.fonts.check("italic 900 10px Kanit")) CARD_FONT = "Kanit";
+  } catch (e) {}
+}
 let tpl = { src: null, img: null };
 function loadTemplate(src) {
   if (tpl.src === src) return Promise.resolve(tpl.img);
@@ -348,6 +362,7 @@ function loadTemplate(src) {
 }
 
 async function drawShareCard() {
+  await ensureCardFonts();
   const { p, count, leader, cutoff } = current;
   const b = brand;
   const cv = $("shareCanvas"), ctx = cv.getContext("2d");
