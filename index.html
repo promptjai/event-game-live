@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Game Live</title>
+<link rel="stylesheet" href="fonts/kanit.css">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0606; --panel: rgba(24,13,12,0.85);
+    --hairline: rgba(255,255,255,0.08); --hairline-2: rgba(255,255,255,0.14);
+    --ink: #f5efec; --ink-2: #b3a49e; --ink-3: #776761;
+    --accent: #e0242e; --accent-2: #ff9d2e;
+    --accent-soft: rgba(224,36,46,0.16);
+    --gold: #f5c542;
+    --font: "Kanit", system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font); color: var(--ink); min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(224,36,46,0.18), transparent 60%),
+      radial-gradient(700px 400px at 5% 110%, rgba(255,122,28,0.10), transparent 55%),
+      var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 28px 16px;
+  }
+  .wrap { width: 100%; max-width: 460px; text-align: center; }
+  h1 {
+    font-size: 26px; font-weight: 900; font-style: italic;
+    letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  h1 span {
+    background: linear-gradient(180deg, #fff7e0 15%, #ffd98a 55%, #ff9d2e 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p.sub { color: var(--ink-2); font-size: 14px; margin-bottom: 26px; }
+  a.card {
+    display: block; text-align: left; text-decoration: none; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 16px 18px; margin-bottom: 12px; backdrop-filter: blur(6px);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  a.card:hover, a.card:focus-visible {
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  a.card b {
+    display: block; font-size: 17px; font-weight: 800; font-style: italic;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  a.card small { color: var(--ink-2); font-size: 13px; }
+  a.card .url { color: var(--gold); font-size: 12px; letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>Event Game Live</span></h1>
+  <p class="sub">เลือกหน้าที่ต้องการ</p>
+
+  <a class="card" href="tv/">
+    <b>📺 TV Scoreboard</b>
+    <small>จอใหญ่หน้างาน — Deadline Fighter</small><br>
+    <span class="url">/tv</span>
+  </a>
+
+  <a class="card" href="live/">
+    <b>🥊 Scoreboard</b>
+    <small>ตารางคะแนน TOP 40 อัปเดตสด</small><br>
+    <span class="url">/live</span>
+  </a>
+
+  <a class="card" href="rank/">
+    <b>📱 My Rank</b>
+    <small>เช็คอันดับพลังของคุณ + แชร์การ์ด</small><br>
+    <span class="url">/rank</span>
+  </a>
+</div>
+</body>
+</html>
