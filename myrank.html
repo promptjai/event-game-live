@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>เช็คอันดับพลัง — My Rank</title>
+<title>เช็กอันดับพลัง — My Rank</title>
 <style>
   /* Matches scoreboard.html "fight night" design tokens */
   :root {
@@ -114,7 +114,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 id="hCompany"><span class="bar">เช็คอันดับพลัง</span></h1>
+    <h1 id="hCompany"><span class="bar">เช็กอันดับพลัง</span></h1>
     <p>RANK ตัวตึง</p>
   </header>
 
@@ -675,7 +675,7 @@ async function share() {
   a.href = URL.createObjectURL(blob); a.download = "my-rank.png"; a.click();
   URL.revokeObjectURL(a.href);
   try { await navigator.clipboard.writeText(caption); } catch (e) {}
-  showMsg("บันทึกการ์ดรูปแล้ว (แคปชันคัดลอกไว้ให้แล้ว) — โพสต์ลง IG / FB / TikTok ได้เลย!\nCard image saved (caption copied) — post it to IG / FB / TikTok!");
+  showMsg("บันทึกการ์ดรูปแล้ว (แคปชันแปะไว้ให้แล้ว) — โพสต์ลง IG / FB / TikTok ได้เลย!\nCard image saved (caption copied) — post it to IG / FB / TikTok!");
 }
 
 /* ---------------- wire up ---------------- */
