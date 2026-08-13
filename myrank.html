@@ -390,9 +390,10 @@ async function drawShareCard() {
   ctx.fillStyle = "#b7bcc7"; ctx.font = "800 34px " + F;
   ctx.fillText(spaced("CURRENT RANK"), W / 2, 566);
 
-  /* --- giant metallic rank (silver; gold for top 3) with hot glow --- */
-  const rankFont = rankTxt.length > 4 ? 220 : rankTxt.length > 3 ? 265 : 310;
-  const rankBase = 800;
+  /* --- giant metallic rank (silver; gold for top 3) with hot glow ---
+     sized so the digits' ascenders clear the CURRENT RANK label above */
+  const rankFont = rankTxt.length > 4 ? 180 : rankTxt.length > 3 ? 215 : 250;
+  const rankBase = 786;
   ctx.font = "italic 900 " + rankFont + "px " + F;
   ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.fillText(rankTxt, W / 2 + 7, rankBase + 9);
