@@ -8,10 +8,11 @@
      external font CDN at the venue -->
 <link href="fonts/kanit.css" rel="stylesheet">
 <style>
-  /* Matches scoreboard.html "fight night" design tokens */
+  /* "Deadline Fighter" fire-poster design — matches the share-template.jpg
+     artwork and the reference mock (fire header, red GO, gold rank card) */
   :root {
     color-scheme: dark;
-    --bg: #0b0606; --panel: rgba(24,13,12,0.85); --panel-solid: #170d0c;
+    --bg: #070404; --panel: rgba(22,15,16,0.92); --panel-solid: #14100f;
     --hairline: rgba(255,255,255,0.08); --hairline-2: rgba(255,255,255,0.14);
     --ink: #f5efec; --ink-2: #b3a49e; --ink-3: #776761;
     --accent: #e0242e; --accent-2: #ff9d2e;
@@ -23,75 +24,128 @@
   body {
     font-family: var(--font); color: var(--ink); min-height: 100vh;
     background:
-      radial-gradient(900px 500px at 80% -10%, rgba(224,36,46,0.18), transparent 60%),
+      radial-gradient(60% 40% at 50% 30%, rgba(224,36,46,0.10), transparent 70%),
       radial-gradient(700px 400px at 5% 110%, rgba(255,122,28,0.10), transparent 55%),
+      radial-gradient(700px 400px at 95% 100%, rgba(224,36,46,0.10), transparent 55%),
       var(--bg);
     display: flex; flex-direction: column; align-items: center;
-    padding: 22px 16px 40px;
+    padding-bottom: 48px;
   }
-  .wrap { width: 100%; max-width: 460px; }
-  header { text-align: center; margin-bottom: 18px; }
-  header h1 { font-size: 20px; font-weight: 900; font-style: italic; letter-spacing: 0.06em; text-transform: uppercase; }
-  header h1 .bar {
-    background: linear-gradient(180deg, #fff7e0 15%, #ffd98a 55%, #ff9d2e 100%);
+
+  /* --- fire-frame hero: top strip of the share template (logos + flames) --- */
+  .hero {
+    width: 100%; aspect-ratio: 1080 / 322;
+    background: url("share-template.jpg") top center / 100% auto no-repeat;
+    position: relative;
+  }
+  .hero::after {              /* melt the strip's cut edge into the page bg */
+    content: ""; position: absolute; inset: auto 0 0 0; height: 12%;
+    background: linear-gradient(180deg, transparent, var(--bg));
+  }
+
+  .wrap { width: 100%; max-width: 940px; padding: 10px 16px 0; }
+
+  /* --- lead row: headline left, search panel right (stacks on mobile) --- */
+  .lead { display: grid; grid-template-columns: auto 1fr; gap: 10px 26px; align-items: center; margin: 8px 0 20px; }
+  header { text-align: right; }
+  header .l1 { font-size: 26px; font-weight: 800; line-height: 1.15; }
+  header .l2 {
+    font-size: 40px; font-weight: 900; font-style: italic; line-height: 1.1;
+    background: linear-gradient(180deg, #fff3cf 10%, var(--gold) 55%, #c8912a 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,0.6));
   }
-  header p { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
+  header .l3 { font-size: 15px; font-weight: 700; letter-spacing: 0.3em; color: #e9e2df; margin-top: 2px; }
+  @media (max-width: 719px) {
+    .lead { grid-template-columns: 1fr; }
+    header { text-align: center; }
+    header .l1 { font-size: 22px; }
+    header .l2 { font-size: 34px; }
+  }
 
   .panel {
-    background: var(--panel); border: 1px solid var(--hairline); border-radius: 16px;
+    background: var(--panel); border: 1px solid var(--hairline); border-radius: 18px;
     padding: 18px; backdrop-filter: blur(6px);
   }
-  .searchrow { display: flex; gap: 8px; }
+  .searchrow { display: flex; gap: 10px; }
   input[type=text] {
-    flex: 1; min-width: 0; background: rgba(255,255,255,0.05); color: var(--ink);
-    border: 1px solid var(--hairline-2); border-radius: 12px; padding: 13px 14px;
-    font: inherit; font-size: 16px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    flex: 1; min-width: 0; background: rgba(0,0,0,0.45); color: var(--ink);
+    border: 1px solid var(--hairline-2); border-radius: 12px; padding: 14px 16px;
+    font: inherit; font-size: 17px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
     outline: none;
   }
   input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  input::placeholder { text-transform: none; font-weight: 400; color: var(--ink-3); }
+  input::placeholder { text-transform: none; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
   button {
-    font: inherit; font-weight: 800; letter-spacing: 0.06em; border: none; cursor: pointer;
-    border-radius: 12px; padding: 13px 18px; color: #fff;
-    background: linear-gradient(135deg, #e0242e, #a31119);
+    font: inherit; font-weight: 900; letter-spacing: 0.08em; border: none; cursor: pointer;
+    border-radius: 12px; padding: 14px 24px; color: #fff;
+    background: linear-gradient(180deg, #f03340, #b3141d);
+    box-shadow: 0 4px 16px rgba(224,36,46,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
   }
   button:active { transform: translateY(1px); }
-  .hint { color: var(--ink-3); font-size: 12px; margin-top: 10px; line-height: 1.5; }
+  .hint { color: var(--ink-3); font-size: 12.5px; margin-top: 10px; line-height: 1.55; }
 
-  .msg { margin-top: 14px; text-align: center; color: var(--ink-2); font-size: 14px; line-height: 1.6; display: none; }
+  .msg { margin-top: 14px; text-align: center; color: var(--ink-2); font-size: 14px; line-height: 1.6; display: none; white-space: pre-line; }
   .msg.show { display: block; }
   .msg.err { color: #ff8d8d; }
 
-  /* ---------------- rank card ---------------- */
-  .card { display: none; margin-top: 16px; overflow: hidden; padding: 0; }
+  /* ---------------- rank score card (matches the share-card design) ---------------- */
+  .card {
+    display: none; margin: 4px auto 0; max-width: 430px; overflow: hidden; padding: 0;
+    position: relative; border-radius: 14px; border: 1px solid var(--hairline);
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(224,36,46,0.10), transparent 55%),
+      radial-gradient(90% 60% at 85% 90%, rgba(255,122,28,0.07), transparent 60%),
+      linear-gradient(160deg, #1b1213 0%, #100b0b 45%, #150c0c 100%);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+  }
   .card.show { display: block; animation: pop-in .45s cubic-bezier(.2,.9,.3,1.1); }
   @keyframes pop-in { from { opacity: 0; transform: scale(.94) translateY(12px);} to { opacity: 1; transform: none;} }
-  .card-head {
-    background: linear-gradient(100deg, var(--panel-solid) 0%, #33100f 60%, #47130f 100%);
-    border-bottom: 1px solid var(--hairline-2); padding: 12px 18px;
-    display: flex; justify-content: space-between; align-items: center;
+  .live {
+    position: absolute; top: 12px; right: 14px; z-index: 2;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.18em; color: #ff5d5d;
   }
-  .card-head .co { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
-  .card-head .co b { color: var(--accent-2); }
-  .live { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.18em; color: #ff5d5d; }
   .live i { width: 7px; height: 7px; border-radius: 50%; background: #ff5d5d; animation: pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 0%,100% { opacity: 1;} 50% { opacity: .4;} }
 
-  .card-body { padding: 22px 18px 18px; text-align: center; }
-  .tag { font-size: 30px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; word-break: break-all; }
-  .rankline { margin-top: 14px; }
-  .rankline .lbl { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; color: var(--ink-3); }
-  .bigrank {
-    font-size: 84px; font-weight: 900; font-style: italic; line-height: 1.05; font-variant-numeric: tabular-nums;
-    background: linear-gradient(180deg, #ffffff 15%, #cfd6e0 45%, #8a93a3 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 44px var(--accent-glow);
+  .card-body { padding: 30px 18px 18px; text-align: center; }
+  /* name plate: angled banner, hot red edge fading to black (as in the mock) */
+  .tag {
+    display: inline-block; min-width: 62%; max-width: 100%; padding: 8px 34px;
+    font-size: 30px; font-weight: 900; font-style: italic; letter-spacing: 0.05em;
+    text-transform: uppercase; word-break: break-all; color: #fff;
+    background: linear-gradient(90deg, #e0242e 0%, #8c1119 30%, #221011 72%, #16090a 100%);
+    clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.55);
   }
-  .bigrank.top3 { background: linear-gradient(180deg, #fff3cf 15%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; }
-  .ofn { color: var(--ink-2); font-size: 14px; font-weight: 700; }
-  .scoreline { margin-top: 12px; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .scoreline span { font-size: 12px; color: var(--ink-3); font-weight: 700; letter-spacing: 0.14em; }
+  .rankline { margin-top: 16px; }
+  .rankline .lbl { font-size: 13px; font-weight: 800; letter-spacing: 0.3em; color: #cfd2d8; }
+  .bigrank {
+    font-size: 108px; font-weight: 900; font-style: italic; line-height: 1.02; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff6d8 8%, #ffe08a 38%, var(--gold) 62%, #b9871a 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 6px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 34px rgba(245,197,66,0.28));
+  }
+  .bigrank.top3 { filter: drop-shadow(0 6px 2px rgba(0,0,0,0.55)) drop-shadow(0 0 40px rgba(245,197,66,0.45)); }
+  .ofn {
+    display: inline-block; margin-top: 4px; padding: 5px 20px;
+    color: #f0f0f3; font-size: 14px; font-weight: 700; font-style: italic;
+    background: #232227; clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+  }
+  .scoreline {
+    margin-top: 18px; display: flex; align-items: baseline; justify-content: center; gap: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .scoreline .glove { font-size: 24px; align-self: center; }
+  .scoreline .slbl { font-size: 17px; font-weight: 900; font-style: italic; letter-spacing: 0.06em; color: #fff; }
+  .scoreline .sval {
+    font-size: 42px; font-weight: 900; font-style: italic; line-height: 1;
+    background: linear-gradient(180deg, #ffe9a8 15%, #e2a42b 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 3px 1px rgba(0,0,0,0.5));
+  }
 
   .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--hairline); border-top: 1px solid var(--hairline); margin-top: 18px; }
   .cell { background: var(--panel-solid); padding: 12px 6px; text-align: center; }
@@ -115,35 +169,40 @@
 </style>
 </head>
 <body>
+<div class="hero" aria-hidden="true"></div>
 <div class="wrap">
-  <header>
-    <h1 id="hCompany"><span class="bar">ชวนคุณมาเช็กลำดับความตึง</span></h1>
-    <p>RANK ตัวตึง</p>
-  </header>
+  <div class="lead">
+    <header>
+      <div class="l1">ชวนคุณมาเช็กอันดับ</div>
+      <div class="l2">ความตึง!</div>
+      <div class="l3">RANKING</div>
+    </header>
 
-  <div class="panel">
-    <div class="searchrow">
-      <input type="text" id="tagInput" placeholder="เช่น / e.g. BEAMZILLA" autocomplete="off" autocapitalize="characters" enterkeyhint="search">
-      <button id="goBtn">GO</button>
+    <div class="panel">
+      <div class="searchrow">
+        <input type="text" id="tagInput" placeholder="เช่น / e.g. JACK" autocomplete="off" autocapitalize="characters" enterkeyhint="search">
+        <button id="goBtn">GO</button>
+      </div>
+      <div class="hint">กรอกฉายานักสู้ที่ลงทะเบียนไว้ เพื่อเช็คอันดับความตึงแบบ Real-time พร้อมแชร์พลังความตึงของคุณลงโซเชียล<br>Enter the fighter name you registered to check your rank in real time — and share your power on social.</div>
     </div>
-    <div class="hint">ชื่อนักสู้คือชื่อที่คุณตั้งตอนลงทะเบียน (ชื่อบนจอใหญ่)<br>Your fighter name is the one you chose at registration — the name on the big screen.</div>
   </div>
 
   <div class="msg" id="msg"></div>
 
-  <div class="panel card" id="card">
-    <div class="card-head">
-      <div class="co" id="cardCo">&nbsp;</div>
-      <div class="live"><i></i>LIVE</div>
-    </div>
+  <div class="card" id="card">
+    <div class="live"><i></i>LIVE</div>
     <div class="card-body">
       <div class="tag" id="cTag">—</div>
       <div class="rankline">
-        <div class="lbl">RANK นักสู้</div>
+        <div class="lbl">CURRENT RANK</div>
         <div><span class="bigrank" id="cRank">–</span></div>
         <div class="ofn" id="cOf">of – players</div>
       </div>
-      <div class="scoreline"><span>TOTAL&nbsp;&nbsp;</span><span id="cScore" style="font-size:inherit;color:var(--ink);letter-spacing:0">0</span></div>
+      <div class="scoreline">
+        <span class="glove">🥊</span>
+        <span class="slbl">TOTAL SCORE</span>
+        <span class="sval" id="cScore">0</span>
+      </div>
       <div class="split">
         <div class="cell"><div class="v" id="cPunch">–</div><div class="k">PUNCH BEST</div></div>
         <div class="cell"><div class="v" id="cScream">–</div><div class="k">SCREAM BONUS</div></div>
@@ -286,8 +345,6 @@ async function lookup(rawTag, silent) {
 
 function renderCard(b) {
   const { p, count, cutoff } = current;
-  $("cardCo").innerHTML = esc(b.company.toUpperCase()) + " <b>// LIVE RANK</b>";
-  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">ชวนคุณมาเช็กลำดับความตึง</span>';
   $("cTag").textContent = p.tag;
   const rankEl = $("cRank");
   rankEl.textContent = p.total > 0 ? "#" + p.rank : "—";
@@ -325,7 +382,6 @@ function renderCard(b) {
   $("card").classList.add("show");
   $("refreshed").textContent = "อัปเดตล่าสุด / updated " + new Date().toLocaleTimeString();
 }
-function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 
 /* ---------------- share card image (canvas -> native share sheet) ----------------
    1080x1350 (4:5) — "Deadline Fighter" fight-poster design.
@@ -698,10 +754,6 @@ $("goBtn").addEventListener("click", () => lookup($("tagInput").value));
 $("tagInput").addEventListener("keydown", e => { if (e.key === "Enter") lookup($("tagInput").value); });
 $("shareBtn").addEventListener("click", share);
 $("refreshBtn").addEventListener("click", () => current && lookup(current.p.tag));
-
-fetchBrand().then(b => {
-  $("hCompany").innerHTML = esc(b.company.toUpperCase()) + ' <span class="bar">ชวนคุณมาเช็กลำดับความตึง</span>';
-}).catch(() => {});
 
 const initTag = QS.get("tag");
 if (initTag) { $("tagInput").value = initTag; lookup(initTag); }
